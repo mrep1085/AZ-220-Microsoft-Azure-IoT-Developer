@@ -157,7 +157,7 @@ In this exercise, you will deploy an Ubuntu Server VM.
 
 1. In the search results, under **Services**, click **Virtual machines**.
 
-1. On the **Virtual machines** page, click **+ Add** and select **Virtual machine**.
+1. On the **Virtual machines** page, click **+ Create** and select **Virtual machine**.
 
 1. On the **Create a virtual machine** blade, in the **Subscription** dropdown, select the Azure Subscription that you are using for this course.
 
