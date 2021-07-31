@@ -245,7 +245,7 @@ In this task, you will create a Virtual Machine that will represent your IoT dev
 
 1. In the search results, under **Services**, click **Virtual machines**.
 
-1. On the **Virtual machines** page, click **+ Add** and select **Virtual machine**.
+1. On the **Virtual machines** page, click **+ Create** and select **Virtual machine**.
 
 1. On the **Create a virtual machine** blade, in the **Subscription** dropdown, ensure that the subscription you are using for this course is selected.
 
@@ -541,7 +541,7 @@ In this lab, you will be using the symmetric key as authentication and will need
 
     Specifically, you should verify that the service is **Loaded: loaded** and **Active: active (running)**.
 
-    > **Note**: If your Azure Defender for IoT Agent isn't running or active, please check out [Deploy Defender for IoT C# based security agent for Linux](https://docs.microsoft.com/en-us/azure/defender-for-iot/how-to-deploy-linux-css). Common issues are that might leave the service **Active: activating** are an incorrect key value or not specifying the full IoT Hub hostname.
+    > **Note**: If your Azure Defender for IoT Agent isn't running or active, please check out [Deploy Defender for IoT C# based security agent for Linux](https://docs.microsoft.com/en-us/azure/defender-for-iot/device-builders/how-to-deploy-linux-cs). Common issues are that might leave the service **Active: activating** are an incorrect key value or not specifying the full IoT Hub hostname.
 
 1. In the Azure portal, navigate back your IoT Hub blade, and then open the **vm-az220-training-edge0002-{your-id}** device blade.
 
