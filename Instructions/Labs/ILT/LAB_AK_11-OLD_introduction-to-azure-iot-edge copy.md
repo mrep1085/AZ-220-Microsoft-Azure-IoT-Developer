@@ -84,13 +84,65 @@ To ensure these resources are available, complete the following tasks.
 
 The resources have now been created.
 
-### Exercise 2: Create an IoT Edge VM
+### Exercise 2: Deploy a Linux VM
 
-In this exercise, you will create an IoT Edge device identity and then use the device connection string to configure the IoT Edge runtime.
+In this exercise, you will deploy an Ubuntu Server VM.
 
-#### Task 1: Create an IoT Edge Device Identity in IoT Hub using Azure CLI
+1. If necessary, log in to your Azure portal using your Azure account credentials.
 
-In this task, you will create a new IoT Edge Device Identity within Azure IoT Hub using the Azure CLI.
+    If you have more than one Azure account, be sure that you are logged in with the account that is tied to the subscription that you will be using for this course.
+
+1. In the **Search resources, services and docs** field, enter **Virtual machines**.
+
+1. In the search results, under **Services**, click **Virtual machines**.
+
+1. On the **Virtual machines** page, click **+ Add** and select **Virtual machine**.
+
+1. On the **Create a virtual machine** blade, in the **Subscription** dropdown, select the Azure Subscription that you are using for this course.
+
+1. To the right of **Resource group**, click **Create new**.
+
+    > **Note**: You will be using a single resource group to help track/manage all of the Virtual Machine resources that you create during this course. You may encounter guidance that suggests creating a separate resource group for each of your VMs. In a production environment, having a separate resource group for each VM can help you to manage any addition resources that you add to the VM. For the simple manner in which you use VMs in this course, having separate resource groups for each VM is not necessary or practical.
+
+1. In the popup for the new resource group, under **Name**, enter **rg-az220vm** and then click **OK**.
+
+1. In the **Virtual machine name** textbox, enter **vm-az220-training-edge0001-{your-id}**
+
+1. In the **Region** dropdown, select the region where your Azure IoT Hub is provisioned.
+
+1. Leave **Availability options** set to **No infrastructure redundancy required**.
+
+1. In the **Image** field, select **Ubuntu Server 18.04 LTS - Gen1** image.
+
+1. Leave **Azure Spot instance** field unchecked.
+
+1. To the right of **Size**, click **Change size**.
+
+1. On the **Select a VM size** blade, under **VM Size**, click **Standard_B1ms**, and then click **Select**.
+
+    If you don't see Standard_B1ms listed, you may need to use the **Clear all filters** link to make this size available in the list.
+
+    > **Note**:  Not all VM sizes are available in all regions. If, in a later step, you are unable to select the VM size, try a different region. For example, if **West US** doesn't have the sizes available, try **West US 2**.
+
+1. Under **Administrator account**, to the right of **Authentication type**, click **Password**.
+
+1. For the VM Administrator account, enter values for the **Username**, **Password**, and **Confirm password** fields.
+
+    > **Important:** Do not lose/forget these values - you cannot connect to your VM without them.
+
+1. Notice that the **Inbound port rules** are configured to enable inbound **SSH** access to the VM.
+
+    This will be used to remote into the VM to configure/manage it.
+
+1. Click **Review + create**.
+
+1. Wait for the **Validation passed** message to be displayed at the top of the blade, and then click **Create**.
+
+    > **Note**:  Deployment can take as much as 5 minutes to complete. You can continue on to the next exercise while it is deploying.
+
+### Exercise 3: Create an IoT Edge Device Identity in IoT Hub using Azure CLI
+
+In this exercise, you will create a new IoT Edge Device Identity within Azure IoT Hub using the Azure CLI.
 
 1. If necessary, log in to your Azure portal using your Azure account credentials.
 
@@ -167,35 +219,6 @@ In this task, you will create a new IoT Edge Device Identity within Azure IoT Hu
     ```
 
     > **Note**:  The IoT Edge Device Connection String can also be accessed within the Azure Portal, by navigating to **IoT Hub** -> **IoT Edge** -> **Your Edge Device** -> **Connection String (primary key)**
-
-#### Task 2: Provision IoT Edge VM
-
-In this task, you will use an ARM (Azure Resource Manager) Template to provision a Linux VM, install the IoT Edge runtime and configure the connection.
-
-1. Select **Deploy to Azure**:
-
-    [![Deploy To Azure](media/deploytoazure.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FMicrosoftLearning%2FAZ-220-Microsoft-Azure-IoT-Developer%2Fbicep%2FAllfiles%2FARM%2Flab11a.json)
-
-1. If prompted, login to the **Azure Portal**.
-
-    The **Custom deployment** page will be displayed.
-
-1. Under **Project details**, in the **Subscription** dropdown, ensure that the Azure subscription that you intend to use for this course is selected.
-
-1. In the **Resource group** dropdown, select **rg-az220**.
-
-1. In the **Your ID** field, enter the unique ID you created in Exercise 1.
-
-1. In the **Course ID** field, enter **az220**.
-
-1. To validate the template, click **Review and create**.
-
-1. If validation passes, click **Create**.
-
-    The deployment will start.
-
-
----
 
 ### Exercise 4: Install IotEdge and Connect IoT Edge Device to IoT Hub
 

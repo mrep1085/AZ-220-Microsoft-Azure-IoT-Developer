@@ -1,5 +1,5 @@
-@description('Unique DNS Name for the Storage Account where the Virtual Machine\'s disks will be placed.')
-param dnsLabelPrefix string
+@description('The unique name for the VM.')
+param virtualMachineName string
 
 @description('User name for the Virtual Machine.')
 param adminUsername string
@@ -29,12 +29,12 @@ param allowSsh bool = true
 
 var imagePublisher = 'Canonical'
 var imageOffer = 'UbuntuServer'
-var nicName_var = 'nic-${uniqueString(dnsLabelPrefix)}'
-var vmName_var = dnsLabelPrefix
-var virtualNetworkName_var = 'vnet-${uniqueString(dnsLabelPrefix)}'
-var publicIPAddressName_var = 'ip-${dnsLabelPrefix}'
+var nicName_var = 'nic-${virtualMachineName}'
+var vmName_var = virtualMachineName
+var virtualNetworkName_var = 'vnet-${virtualMachineName}'
+var publicIPAddressName_var = 'ip-${virtualMachineName}'
 var addressPrefix = '10.0.0.0/16'
-var subnet1Name = 'subnet-${uniqueString(dnsLabelPrefix)}'
+var subnet1Name = 'subnet-${virtualMachineName}'
 var subnet1Prefix = '10.0.0.0/24'
 var publicIPAddressType = 'Dynamic'
 var vnetID = virtualNetworkName.id
@@ -51,7 +51,7 @@ var linuxConfiguration = {
   }
 }
 var dcs = deviceConnectionString
-var networkSecurityGroupName_var = 'nsg-${uniqueString(dnsLabelPrefix)}'
+var networkSecurityGroupName_var = 'nsg-${virtualMachineName}'
 var sshRule = [
   {
     name: 'default-allow-22'
@@ -75,7 +75,7 @@ resource publicIPAddressName 'Microsoft.Network/publicIPAddresses@2015-06-15' = 
   properties: {
     publicIPAllocationMethod: publicIPAddressType
     dnsSettings: {
-      domainNameLabel: dnsLabelPrefix
+      domainNameLabel: virtualMachineName
     }
   }
 }
@@ -143,7 +143,64 @@ resource vmName 'Microsoft.Compute/virtualMachines@2016-04-30-preview' = {
       computerName: vmName_var
       adminUsername: adminUsername
       adminPassword: adminPasswordOrKey
-      customData: base64('#cloud-config\n\napt:\n  preserve_sources_list: true\n  sources:\n    msft.list:\n      source: "deb https://packages.microsoft.com/ubuntu/18.04/multiarch/prod bionic main"\n      key: |\n        -----BEGIN PGP PUBLIC KEY BLOCK-----\n        Version: GnuPG v1.4.7 (GNU/Linux)\n\n        mQENBFYxWIwBCADAKoZhZlJxGNGWzqV+1OG1xiQeoowKhssGAKvd+buXCGISZJwT\n        LXZqIcIiLP7pqdcZWtE9bSc7yBY2MalDp9Liu0KekywQ6VVX1T72NPf5Ev6x6DLV\n        7aVWsCzUAF+eb7DC9fPuFLEdxmOEYoPjzrQ7cCnSV4JQxAqhU4T6OjbvRazGl3ag\n        OeizPXmRljMtUUttHQZnRhtlzkmwIrUivbfFPD+fEoHJ1+uIdfOzZX8/oKHKLe2j\n        H632kvsNzJFlROVvGLYAk2WRcLu+RjjggixhwiB+Mu/A8Tf4V6b+YppS44q8EvVr\n        M+QvY7LNSOffSO6Slsy9oisGTdfE39nC7pVRABEBAAG0N01pY3Jvc29mdCAoUmVs\n        ZWFzZSBzaWduaW5nKSA8Z3Bnc2VjdXJpdHlAbWljcm9zb2Z0LmNvbT6JATUEEwEC\n        AB8FAlYxWIwCGwMGCwkIBwMCBBUCCAMDFgIBAh4BAheAAAoJEOs+lK2+EinPGpsH\n        /32vKy29Hg51H9dfFJMx0/a/F+5vKeCeVqimvyTM04C+XENNuSbYZ3eRPHGHFLqe\n        MNGxsfb7C7ZxEeW7J/vSzRgHxm7ZvESisUYRFq2sgkJ+HFERNrqfci45bdhmrUsy\n        7SWw9ybxdFOkuQoyKD3tBmiGfONQMlBaOMWdAsic965rvJsd5zYaZZFI1UwTkFXV\n        KJt3bp3Ngn1vEYXwijGTa+FXz6GLHueJwF0I7ug34DgUkAFvAs8Hacr2DRYxL5RJ\n        XdNgj4Jd2/g6T9InmWT0hASljur+dJnzNiNCkbn9KbX7J/qK1IbR8y560yRmFsU+\n        NdCFTW7wY0Fb1fWJ+/KTsC4=\n        =J6gs\n        -----END PGP PUBLIC KEY BLOCK----- \npackages:\n  - moby-cli\n  - moby-engine\nruncmd:\n  - dcs="${dcs}"\n  - |\n      set -x\n      (\n        echo "Device connection string: $dcs"\n\n        # Wait for docker daemon to start\n        while [ $(ps -ef | grep -v grep | grep docker | wc -l) -le 0 ]; do \n          sleep 3\n        done\n\n        apt install aziot-identity-service=1.2.0-1\n        apt install aziot-edge=1.2.0-1\n\n        if [ ! -z $dcs ]; then\n          mkdir /etc/aziot\n          wget https://raw.githubusercontent.com/Azure/iotedge-vm-deploy/1.2.0/config.toml -O /etc/aziot/config.toml\n          sed -i "s#\\(connection_string = \\).*#\\1\\"$dcs\\"#g" /etc/aziot/config.toml\n          iotedge config apply -c /etc/aziot/config.toml\n        fi\n\n        apt install -y deviceupdate-agent \n        apt install -y deliveryoptimization-plugin-apt\n        systemctl restart adu-agent\n      ) &\n\n')
+      customData: base64('''
+#cloud-config
+
+apt:
+  preserve_sources_list: true
+  sources:
+    msft.list:
+      source: "deb https://packages.microsoft.com/ubuntu/18.04/multiarch/prod bionic main"
+      key: |
+        -----BEGIN PGP PUBLIC KEY BLOCK-----
+        Version: GnuPG v1.4.7 (GNU/Linux)
+
+        mQENBFYxWIwBCADAKoZhZlJxGNGWzqV+1OG1xiQeoowKhssGAKvd+buXCGISZJwT
+        LXZqIcIiLP7pqdcZWtE9bSc7yBY2MalDp9Liu0KekywQ6VVX1T72NPf5Ev6x6DLV
+        7aVWsCzUAF+eb7DC9fPuFLEdxmOEYoPjzrQ7cCnSV4JQxAqhU4T6OjbvRazGl3ag
+        OeizPXmRljMtUUttHQZnRhtlzkmwIrUivbfFPD+fEoHJ1+uIdfOzZX8/oKHKLe2j
+        H632kvsNzJFlROVvGLYAk2WRcLu+RjjggixhwiB+Mu/A8Tf4V6b+YppS44q8EvVr
+        M+QvY7LNSOffSO6Slsy9oisGTdfE39nC7pVRABEBAAG0N01pY3Jvc29mdCAoUmVs
+        ZWFzZSBzaWduaW5nKSA8Z3Bnc2VjdXJpdHlAbWljcm9zb2Z0LmNvbT6JATUEEwEC
+        AB8FAlYxWIwCGwMGCwkIBwMCBBUCCAMDFgIBAh4BAheAAAoJEOs+lK2+EinPGpsH
+        /32vKy29Hg51H9dfFJMx0/a/F+5vKeCeVqimvyTM04C+XENNuSbYZ3eRPHGHFLqe
+        MNGxsfb7C7ZxEeW7J/vSzRgHxm7ZvESisUYRFq2sgkJ+HFERNrqfci45bdhmrUsy
+        7SWw9ybxdFOkuQoyKD3tBmiGfONQMlBaOMWdAsic965rvJsd5zYaZZFI1UwTkFXV
+        KJt3bp3Ngn1vEYXwijGTa+FXz6GLHueJwF0I7ug34DgUkAFvAs8Hacr2DRYxL5RJ
+        XdNgj4Jd2/g6T9InmWT0hASljur+dJnzNiNCkbn9KbX7J/qK1IbR8y560yRmFsU+
+        NdCFTW7wY0Fb1fWJ+/KTsC4=
+        =J6gs
+        -----END PGP PUBLIC KEY BLOCK-----
+packages:
+  - moby-cli
+  - moby-engine
+runcmd:
+  - dcs="${dcs}"
+  - |
+      set -x
+      (
+        echo "Device connection string: $dcs"
+
+        # Wait for docker daemon to start
+        while [ $(ps -ef | grep -v grep | grep docker | wc -l) -le 0 ]; do
+          sleep 3
+        done
+
+        apt install aziot-identity-service=1.2.0-1
+        apt install aziot-edge=1.2.0-1
+
+        if [ ! -z $dcs ]; then
+          mkdir /etc/aziot
+          wget https://raw.githubusercontent.com/Azure/iotedge-vm-deploy/1.2.0/config.toml -O /etc/aziot/config.toml
+          sed -i "s#\\(connection_string = \\).*#\\1\\"$dcs\\"#g" /etc/aziot/config.toml
+          iotedge config apply -c /etc/aziot/config.toml
+        fi
+
+        apt install -y deviceupdate-agent
+        apt install -y deliveryoptimization-plugin-apt
+        systemctl restart adu-agent
+      ) &
+''')
       linuxConfiguration: ((authenticationType == 'password') ? json('null') : linuxConfiguration)
     }
     storageProfile: {
