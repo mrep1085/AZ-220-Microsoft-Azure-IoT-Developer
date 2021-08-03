@@ -184,9 +184,23 @@ In this task, you will use an ARM (Azure Resource Manager) Template to provision
 
 1. In the **Resource group** dropdown, select **rg-az220**.
 
-1. In the **Your ID** field, enter the unique ID you created in Exercise 1.
+    **Note**: By selecting an existing resource group, the **Region** field will be pre-populated and read-only.
 
-1. In the **Course ID** field, enter **az220**.
+1. In the **Virtual Machine Name** textbox, enter **vm-az220-training-edge0001-{your-id}**
+
+1. In the **Device Connection String** field, enter a the connection string value from the previous exercise.
+
+1. In the **Virtual Machine Size** field, ensure **Standard_DS1_v2** is entered.
+
+1. In the **Ubuntu OS Version** field, ensure that **18.04-LTS** is entered.
+
+1. In the **Admin Username** field, enter a username.
+
+1. In the **Authentication Type** field, ensure **Password** is selected.
+
+1. In the **Admin Password Or Key** field, enter the password you wish to use.
+
+1. In the **Allow SSH** field, ensure **true** is selected.
 
 1. To validate the template, click **Review and create**.
 

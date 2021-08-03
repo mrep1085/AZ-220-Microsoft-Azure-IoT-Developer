@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.451.19169",
-      "templateHash": "18197254218841101008"
+      "templateHash": "2623214446880655894"
     }
   },
   "parameters": {
@@ -15,12 +15,6 @@
         "description": "The unique name for the VM."
       }
     },
-    "adminUsername": {
-      "type": "string",
-      "metadata": {
-        "description": "User name for the Virtual Machine."
-      }
-    },
     "deviceConnectionString": {
       "type": "string",
       "defaultValue": "",
@@ -28,7 +22,7 @@
         "description": "IoT Edge Device Connection String"
       }
     },
-    "vmSize": {
+    "virtualMachineSize": {
       "type": "string",
       "defaultValue": "Standard_DS1_v2",
       "metadata": {
@@ -42,11 +36,17 @@
         "description": "The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version."
       }
     },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "User name for the Virtual Machine."
+      }
+    },
     "authenticationType": {
       "type": "string",
-      "defaultValue": "sshPublicKey",
+      "defaultValue": "password",
       "metadata": {
-        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
+        "description": "Type of authentication to use on the Virtual Machine. SSH key is recommended for production."
       },
       "allowedValues": [
         "sshPublicKey",
@@ -59,7 +59,7 @@
         "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
       }
     },
-    "allowSsh": {
+    "allowSSH": {
       "type": "bool",
       "defaultValue": true,
       "metadata": {
@@ -130,7 +130,7 @@
       "name": "[variables('networkSecurityGroupName_var')]",
       "location": "[resourceGroup().location]",
       "properties": {
-        "securityRules": "[if(parameters('allowSsh'), variables('sshRule'), variables('noRule'))]"
+        "securityRules": "[if(parameters('allowSSH'), variables('sshRule'), variables('noRule'))]"
       }
     },
     {
@@ -193,7 +193,7 @@
       "location": "[resourceGroup().location]",
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[parameters('vmSize')]"
+          "vmSize": "[parameters('virtualMachineSize')]"
         },
         "osProfile": {
           "computerName": "[variables('vmName_var')]",

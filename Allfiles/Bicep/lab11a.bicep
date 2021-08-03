@@ -1,31 +1,31 @@
 @description('The unique name for the VM.')
 param virtualMachineName string
 
-@description('User name for the Virtual Machine.')
-param adminUsername string
-
 @description('IoT Edge Device Connection String')
 param deviceConnectionString string = ''
 
 @description('VM size')
-param vmSize string = 'Standard_DS1_v2'
+param virtualMachineSize string = 'Standard_DS1_v2'
 
 @description('The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version.')
 param ubuntuOSVersion string = '18.04-LTS'
+
+@description('User name for the Virtual Machine.')
+param adminUsername string
 
 @allowed([
   'sshPublicKey'
   'password'
 ])
-@description('Type of authentication to use on the Virtual Machine. SSH key is recommended.')
-param authenticationType string = 'sshPublicKey'
+@description('Type of authentication to use on the Virtual Machine. SSH key is recommended for production.')
+param authenticationType string = 'password'
 
 @description('SSH Key or password for the Virtual Machine. SSH key is recommended.')
 @secure()
 param adminPasswordOrKey string
 
 @description('Allow SSH traffic through the firewall')
-param allowSsh bool = true
+param allowSSH bool = true
 
 var imagePublisher = 'Canonical'
 var imageOffer = 'UbuntuServer'
@@ -84,7 +84,7 @@ resource networkSecurityGroupName 'Microsoft.Network/networkSecurityGroups@2019-
   name: networkSecurityGroupName_var
   location: resourceGroup().location
   properties: {
-    securityRules: (allowSsh ? sshRule : noRule)
+    securityRules: (allowSSH ? sshRule : noRule)
   }
 }
 
@@ -137,7 +137,7 @@ resource vmName 'Microsoft.Compute/virtualMachines@2016-04-30-preview' = {
   location: resourceGroup().location
   properties: {
     hardwareProfile: {
-      vmSize: vmSize
+      vmSize: virtualMachineSize
     }
     osProfile: {
       computerName: vmName_var
