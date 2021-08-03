@@ -84,7 +84,7 @@ To ensure these resources are available, complete the following tasks.
 
 The resources have now been created.
 
-### Exercise 2: Create an IoT Edge VM
+### Exercise 2: Create and configure an IoT Edge VM
 
 In this exercise, you will create an IoT Edge device identity and then use the device connection string to configure the IoT Edge runtime.
 
@@ -182,9 +182,9 @@ In this task, you will use an ARM (Azure Resource Manager) Template to provision
 
 1. Under **Project details**, in the **Subscription** dropdown, ensure that the Azure subscription that you intend to use for this course is selected.
 
-1. In the **Resource group** dropdown, select **rg-az220**.
+1. In the **Resource group** dropdown, select  create and enter **rg-az220vm**.
 
-    **Note**: By selecting an existing resource group, the **Region** field will be pre-populated and read-only.
+1. In the **Region** field, enter the same location you have used earlier.
 
 1. In the **Virtual Machine Name** textbox, enter **vm-az220-training-edge0001-{your-id}**
 
@@ -206,44 +206,24 @@ In this task, you will use an ARM (Azure Resource Manager) Template to provision
 
 1. If validation passes, click **Create**.
 
-    The deployment will start.
+    > **Note**:  Deployment can take as much as 5 minutes to complete.
 
+1. Once the template has completed, navigate to the **Outputs** pane and make a note of the following:
 
----
+    * Public FQDN
+    * Public SSH
 
-### Exercise 4: Install IotEdge and Connect IoT Edge Device to IoT Hub
-
-In this exercise, you will connect the IoT Edge Device to Azure IoT Hub.
-
-#### Task 1: Connect to the VM
-
-1. Verify that the IoT Edge virtual machine has been deployed successfully.
-
-    You can check the Notification pane in the Azure portal.
-
-1. On the Azure portal menu, click **Resource groups**.
-
-1. On the **Resource groups** blade, locate the rg-az220vm resource group.
-
-1. On the right-hand side of the blade, across from **rg-az220vm**, click **Click to open context menu** (the ellipsis icon - **...**)
-
-1. On the context menu, click **Pin to dashboard**, and then navigate back to your dashboard.
-
-    You can **Edit** your dashboard to rearrange the tiles if that makes it easier to access your resources.
-
-1. On the **rg-az220vm** resource group tile, to open the IoT Edge virtual machine, click **vm-az220-training-edge0001-{your-id}**.
-
-1. At the top of the **Overview** pane, click **Connect**, and then click **SSH**.
-
-1. On the **Connect** pane, under **4. Run the example command below to connect to your VM**, copy the example command.
-
-    This is a sample SSH command that can be used to connect to the virtual machine that contains the IP Address for the VM and the Administrator username. The command should be formatted similar to `ssh username@52.170.205.79`.
-
-    > **Note**: If the sample command includes `-i <private key path>`, use a text editor to remove that portion of the command, and then copy the updated command into the clipboard.
+#### Task 3: Connect to the VM
 
 1. If Cloud Shell is not still open, click **Cloud Shell**.
 
-1. At the Cloud Shell command prompt, paste the `ssh` command that you updated in the text editor, and then press **Enter**.
+1. At the Cloud Shell command prompt, paste the **Public SSH** command that you noted earlier, and then press **Enter**.
+
+    > **Note**: The command will be similar to:
+
+    ```bash
+    ssh username@vm-az220-training-edge0001-{your-id}.{region}.cloudapp.azure.com
+    ```
 
 1. When prompted with **Are you sure you want to continue connecting?**, type `yes` and then press **Enter**.
 
@@ -259,153 +239,24 @@ In this exercise, you will connect the IoT Edge Device to Azure IoT Hub.
 
     This tells you which VM you are connected to.
 
-    > **Important:** When you connect, you will likely be told there are outstanding OS updates for the Edge VM.  We are ignoring this for our lab purposes, but in production, you always want to be sure to keep your Edge devices up-to-date.
-
-#### Task 2: Add the Microsoft installation packages to the package manager
-
-1. To configure the VM to access the Microsoft installation packages, run the following command:
-
-    ```bash
-    curl https://packages.microsoft.com/config/ubuntu/18.04/multiarch/prod.list > ./microsoft-prod.list
-    ```
-
-1. To add the downloaded package list to the package manager, run the following command:
-
-    ```bash
-    sudo cp ./microsoft-prod.list /etc/apt/sources.list.d/
-    ```
-
-1. To install the packages, the Microsoft GPG public key must be installed. Run the following commands:
-
-    ```bash
-    curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg
-    sudo cp ./microsoft.gpg /etc/apt/trusted.gpg.d/
-    ```
-
-    > **IMPORTANT**: Azure IoT Edge software packages are subject to the license terms located in each package **(usr/share/doc/{package-name}** or the **LICENSE** directory). Read the license terms prior to using a package. Your installation and use of a package constitutes your acceptance of these terms. If you do not agree with the license terms, do not use that package.
-
-#### Task 3: Install a container engine
-
-Azure IoT Edge relies on an OCI-compatible container runtime. For production scenarios, the Moby engine is recommended. The Moby engine is the only container engine officially supported with Azure IoT Edge. Docker CE/EE container images are compatible with the Moby runtime.
-
-1. To update the package lists on the device, run the following command:
-
-    ```bash
-    sudo apt-get update
-    ```
-
-    This command may take a few minutes to run.
-
-1. To install the **Moby** engine, run the following command:
-
-    ```bash
-    sudo apt-get install moby-engine
-    ```
-
-    If prompted to continue, enter **Y**. The install may take a few minutes.
-
-#### Task 4: Install IoT Edge
-
-The IoT Edge security daemon provides and maintains security standards on the IoT Edge device. The daemon starts on every boot and bootstraps the device by starting the rest of the IoT Edge runtime.
-
-1. Usually, updating the package list is a good practice before installing a new package, however the packages were updated in the previous task.To update the package lists on the device, you would run the following command:
-
-    ```bash
-    sudo apt-get update
-    ```
-
-1. To list the versions of **IoT Edge runtime** that are available, run the following command:
-
-    ```bash
-    apt list -a iotedge
-    ```
-
-    > **TIP**: This command is useful if you need to install an earlier version of the runtime.
-
-1. To install the latest version of the **IoT Edge runtime**, run the following command:
-
-    ```bash
-    sudo apt-get install iotedge
-    ```
-
-    If prompted to continue, enter **Y**. The install may take a few minutes.
-
-    > **TIP**: If you wanted to install an earlier version that appeared in the output of the `apt list -a iotedge` command, say **1.0.9-1**, you would use the following command:
-    > ```bash
-    > sudo apt-get install iotedge=1.0.9-1 libiothsm-std=1.0.9-1
-    > ```
-
-1. To confirm that the Azure IoT Edge Runtime is installed on the VM, run the following command:
-
-    ```bash
-    iotedge version
-    ```
-
-    This command outputs the version of the Azure IoT Edge Runtime that is currently installed on the virtual machine.
-
-#### Task 5: Configure connection string
-
-This tasks walks through the steps to connect the VM with symmetric key authentication using the connection string from earlier.
-
-1. To ensure that you are able to configure Azure IoT Edge, enter the following command:
-
-    ```bash
-    sudo chmod a+w /etc/iotedge/config.yaml
-    ```
-
-    To configure Azure IoT Edge, the **/etc/iotedge/config.yaml** configuration file needs to be modified to contain the full path to the certificate and key files on the IoT Edge Device. Before the file can be edited, you must be sure that the **config.yaml** file is not read-only. The command above sets the **config.yaml** file to be writable.
-
-1. To open the **config.yaml** file within the vi/vim editor, enter the following command:
-
-    ```bash
-    sudo vi /etc/iotedge/config.yaml
-    ```
-
-    > **Note**: If you would rather use a different editor such as **code**, **nano**, or **emacs**, that's fine.
-
-1. In the vi/vim editor, scroll down within the file until you locate the **Manual provisioning configuration using a connection string** section.
-
-    > **Note**:  Here are some tips for using **vi** when editing the **config.yaml** file:
-    > * Press the **i** key to put the editor into Insert mode, then you will be able to make changes.
-    > * Press **Esc** to go stop Insert mode and return to Normal mode.
-    > * To Save and Quit, type **:x** and then press **Enter**.
-    > * Save the file, type **:w** and then press **Enter**.
-    > * To quit vi, type **:quit** and then press **Enter**.
-    >
-    > You have to stop Insert mode before you can Save or Quit.
-
-1. Find the provisioning configurations of the file and uncomment the Manual provisioning configuration using a connection string section, if it isn't already uncommented by removing the leading **'# '** (pound symbol and space) characters and replace `<ADD DEVICE CONNECTION STRING HERE>` with the Connection String you copied previously for your IoT Edge Device:
-
-    ```yaml
-    # Manual provisioning configuration using a connection string
-    provisioning:
-      source: "manual"
-      device_connection_string: "<ADD DEVICE CONNECTION STRING HERE>"
-      dynamic_reprovisioning: false
-    ```
-
-    > **Important**: YAML treats spaces as significant characters. In the lines entered above, this means that there should not be any leading spaces in front of **provisioning:** and that there should be two leading spaces in front of **source:**, **device_connection_string:**, and **dynamic_reprovisioning:**
-
-1. To save your changes and exit the editor, press **Esc** and type **:x** and then press **Enter**
-
-1. To apply the changes, the IoT Edge daemon must be restarted with the following command:
-
-    ```bash
-    sudo systemctl restart iotedge
-    ```
-
 1. To ensure the IoT Edge daemon is running, enter the following command:
 
     ```bash
-    sudo systemctl status iotedge
+    sudo iotedge system status
     ```
 
-    This command will display many lines of content, of which the first 3 lines indicate if the service is running. For a running service, the output will be similar to:
+    A successful response will be similar to:
 
     ```bash
-    ● iotedge.service - Azure IoT Edge daemon
-       Loaded: loaded (/lib/systemd/system/iotedge.service; enabled; vendor preset: enabled)
-       Active: active (running) since Fri 2021-03-19 18:06:16 UTC; 1min 0s ago
+    System services:
+        aziot-edged             Running
+        aziot-identityd         Running
+        aziot-keyd              Running
+        aziot-certd             Running
+        aziot-tpmd              Ready
+
+    Use 'iotedge system logs' to check for non-fatal errors.
+    Use 'iotedge check' to diagnose connectivity and configuration issues.
     ```
 
 1. To verify the IoT Edge runtime has connected, run the following command:
@@ -419,9 +270,6 @@ This tasks walks through the steps to connect the VM with symmetric key authenti
     ```bash
     Connectivity checks
     -------------------
-    √ host can connect to and perform TLS handshake with IoT Hub AMQP port - OK
-    √ host can connect to and perform TLS handshake with IoT Hub HTTPS / WebSockets port - OK
-    √ host can connect to and perform TLS handshake with IoT Hub MQTT port - OK
     √ container on the default network can connect to IoT Hub AMQP port - OK
     √ container on the default network can connect to IoT Hub HTTPS / WebSockets port - OK
     √ container on the default network can connect to IoT Hub MQTT port - OK
@@ -430,11 +278,13 @@ This tasks walks through the steps to connect the VM with symmetric key authenti
     √ container on the IoT Edge module network can connect to IoT Hub MQTT port - OK
     ```
 
-    If the connection fails, double-check the connection string value in **config.yaml**.
+    If the connection fails, double-check the connection string value in **/etc/aziot/config.toml**.
 
-### Exercise 5: Add Edge Module to Edge Device
+### Exercise 3: Add Edge Module to Edge Device
 
 In this exercise, you will add a Simulated Temperature Sensor as a custom IoT Edge Module, and deploy it to run on the IoT Edge Device.
+
+#### Task 1: Configure module for deployment
 
 1. If necessary, log in to your Azure portal using your Azure account credentials.
 
@@ -570,6 +420,8 @@ In this exercise, you will add a Simulated Temperature Sensor as a custom IoT Ed
 
     If the value is still not reported, wait a moment and refresh the blade again.
 
+#### Task 2: Confirm module deployment
+
 1. Open a Cloud Shell session (if it is not still open).
 
     If you are no longer connected to the `vm-az220-training-edge0001-{your-id}` virtual machine, connect using **SSH** as before.
@@ -617,7 +469,7 @@ In this exercise, you will add a Simulated Temperature Sensor as a custom IoT Ed
 
     You do not need to restart the module now, but if you find it stops sending telemetry later, then go back into Cloud Shell, SSH to your Edge VM, and run this command to reset it. Once reset, the module will start sending telemetry again.
 
-### Exercise 6: Deploy Azure Stream Analytics as IoT Edge Module
+### Exercise 4: Deploy Azure Stream Analytics as IoT Edge Module
 
 Now that the tempSensor module is deployed and running on the IoT Edge device, we can add a Stream Analytics module that can process messages on the IoT Edge device before sending them on to the IoT Hub.
 
