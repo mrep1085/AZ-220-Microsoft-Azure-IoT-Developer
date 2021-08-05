@@ -91,113 +91,62 @@ To ensure these resources are available, complete the following tasks.
 The resources have now been created.
 ### Exercise 2: Deploy a Linux VM and install IoT Edge runtime
 
-In this exercise, you will deploy an Ubuntu Server VM and configure it as an IoT Edge Gateway.
+In this exercise, you will deploy an Ubuntu Server VM.
 
-#### Task 1: Create IoT Edge Gateway Device Identity
+1. If necessary, log in to your Azure portal using your Azure account credentials.
 
-In this task, you will use Azure IoT Hub to create a new IoT Edge device identity that you will use for the IoT Edge Transparent Gateway (your IoT Edge VM).
+    If you have more than one Azure account, be sure that you are logged in with the account that is tied to the subscription that you will be using for this course.
 
-1. If necessary, log in to your Azure portal using your Azure account credentials, and then navigate to your Azure Dashboard.
+1. In the **Search resources, services and docs** field, enter **Virtual machines**.
 
-1. On the **rg-az220** resource group tile, to open your IoT hub, click **iot-az220-training-{your-id}**.
+1. In the search results, under **Services**, click **Virtual machines**.
 
-1. On the **iot-az220-training-{your-id}** blade, on the left-side menu under **Automatic Device Management**, click **IoT Edge**.
+1. On the **Virtual machines** page, click **+ Add** and select **Virtual machine**.
 
-    The IoT Edge pane allows you to manage the IoT Edge devices connected to the IoT Hub.
+1. On the **Create a virtual machine** blade, in the **Subscription** dropdown, ensure that the subscription you are using for this course is selected.
 
-1. At the top of the pane, click **Add an IoT Edge device**.
+1. In the **Resource group** dropdown, click **rg-az220vm**.
 
-1. On the **Create a device** blade, in the **Device ID** field, enter **vm-az220-training-gw0001-{your-id}**.
+    > **Note**: One Resource Group is being used for all of the Virtual Machine resources created during this course. If the **rg-az220vm** resource group has not already been created, use the following instructions to create it now:
 
-    Be sure to replace {your-id} with the value that you created at the beginning of the course. This is the device identity will be used for authentication and access control.
+    * Under the **Resource group** dropdown, click **Create new**.
+    * In the context menu, under **Name**, type **rg-az220vm** and then click **OK**
 
-1. Under **Authentication type**, ensure that **Symmetric key** is selected, and leave the **Auto-generate keys** box checked.
+    > **Note**: You may encounter guidance that suggests creating a separate resource group for each of your VMs. In a production environment, having a separate resource group for each VM can help you to manage any addition resources that you add to the VM. For the simple manner in which you use VMs in this course, having separate resource groups for each VM is not necessary or practical.
 
-    This will have IoT Hub automatically generate the symmetric keys for authenticating the device.
+1. Under **Instance details**, in the **Virtual machine name** textbox, type **vm-az220-training-gw0001-{your-id}**.
 
-1. Leave the other settings at the default values, and then click **Save**.
+1. In the **Region** dropdown, select the region where your Azure IoT Hub is provisioned.
 
-    After a moment, the new IoT Edge Device will added to the list of IoT Edge devices.
+1. Leave **Availability options** set to **No infrastructure redundancy required**.
 
-1. Under **Device ID**, click **vm-az220-training-gw0001-{your-id}**.
+1. In the **Image** field, select **Ubuntu Server 18.04 LTS - Gen1** image.
 
-1. On the **vm-az220-training-gw0001-{your-id}** blade, copy the **Primary Connection String**.
+1. Leave **Azure Spot instance** field unchecked.
 
-    A copy button is provided to the right of the value.
+1. To the right of **Size**, click **Change size**.
 
-1. Save the value of the **Primary Connection String** to a file, making a note about which device it is associated with.
+1. On the **Select a VM size** blade, under **VM Size**, click **Standard_B1ms**, and then click **Select**.
 
-1. On the **vm-az220-training-gw0001-{your-id}** blade, notice that the list of **Modules** is limited to **\$edgeAgent** and **\$edgeHub**.
+    You may need to use the **Clear all filters** link to make this size available in the list.
 
-    The IoT Edge Agent (**\$edgeAgent**) and IoT Edge Hub (**\$edgeHub**) modules are a part of the IoT Edge Runtime. The Edge Hub is responsible for communication, and the Edge Agent deploys and monitors the modules on the device.
+    > **Note**: Not all VM sizes are available in all regions. If, in a later step, you are unable to select the VM size, try a different region. For example, if **West US** doesn't have the sizes available, try **West US 2**.
 
-1. At the top of the blade, click **Set Modules**.
+1. Under **Administrator account**, to the right of **Authentication type**, click **Password**.
 
-    The **Set module on device** blade can be used to add additional modules to an IoT Edge Device. For now though, you will be using this blade to ensure the message routing is configured correctly for the IoT Edge Gateway device.
+1. For the VM Administrator account, enter values for the **Username**, **Password**, and **Confirm password** fields.
 
-1. At the top of the **Set module on device** blade, click **Routes**.
+    > **Important:** Do not lose/forget these values - you cannot connect to your VM without them.
 
-    Under **Routes**, the editor displays a configured default route for the IoT Edge Device. At this time, it should be configured with a route that sends all messages from all modules to Azure IoT Hub. If the route configuration doesn't match this, then update it to match the following route:
+1. Notice that the **Inbound port rules** are configured to enable inbound **SSH** access to the VM.
 
-    * **NAME**: `route`
-    * **VALUE**: `FROM /* INTO $upstream`
+    This will be used to remote into the VM to configure/manage it.
 
-    The `FROM /*` part of the message route will match all device-to-cloud messages or twin change notifications from any module or leaf device. Then, the `INTO $upstream` tells the route to send those messages to the Azure IoT Hub.
+1. Click **Review + create**.
 
-    > **Note**:  To learn more about configuring message routing within Azure IoT Edge, reference the [Learn how to deploy modules and establish routes in IoT Edge](https://docs.microsoft.com/azure/iot-edge/module-composition#declare-routes#declare-routes) documentation article.
+1. Wait for the **Validation passed** message to be displayed at the top of the blade, and then click **Create**.
 
-1. At the bottom of the blade, click **Review + create**.
-
-    This tab of the **Set module on device** blade displays the deployment manifest for your Edge device. You should see a message at the top of the blade that indicates "Validation passed"
-
-1. Take a moment to review the deployment manifest.
-
-1. At the bottom of the blade, click **Create**.
-
-#### Task 2: Provision IoT Edge VM
-
-In this task, you will use an ARM (Azure Resource Manager) Template to provision a Linux VM, install the IoT Edge runtime and configure the connection.
-
-1. Select **Deploy to Azure**:
-
-    [![Deploy To Azure](media/deploytoazure.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FMicrosoftLearning%2FAZ-220-Microsoft-Azure-IoT-Developer%2Fbicep%2FAllfiles%2FARM%2Flab11a.json)
-
-1. If prompted, login to the **Azure Portal**.
-
-    The **Custom deployment** page will be displayed.
-
-1. Under **Project details**, in the **Subscription** dropdown, ensure that the Azure subscription that you intend to use for this course is selected.
-
-1. In the **Resource group** dropdown, select  create and enter **rg-az220vm**.
-
-1. In the **Region** field, enter the same location you have used earlier.
-
-1. In the **Virtual Machine Name** textbox, enter **vm-az220-training-edge0001-{your-id}**
-
-1. In the **Device Connection String** field, enter a the connection string value from the previous exercise.
-
-1. In the **Virtual Machine Size** field, ensure **Standard_DS1_v2** is entered.
-
-1. In the **Ubuntu OS Version** field, ensure that **18.04-LTS** is entered.
-
-1. In the **Admin Username** field, enter a username.
-
-1. In the **Authentication Type** field, ensure **Password** is selected.
-
-1. In the **Admin Password Or Key** field, enter the password you wish to use.
-
-1. In the **Allow SSH** field, ensure **true** is selected.
-
-1. To validate the template, click **Review and create**.
-
-1. If validation passes, click **Create**.
-
-    > **Note**:  Deployment can take as much as 5 minutes to complete.
-
-1. Once the template has completed, navigate to the **Outputs** pane and make a note of the following:
-
-    * Public FQDN
-    * Public SSH
+    > **Note**:  Deployment can take as much as 5 minutes to complete. You can continue on to the next exercise while it is deploying.
 
 ### Exercise 3: Generate and Configure IoT Edge Device CA Certificates
 
@@ -219,9 +168,31 @@ In this exercise, you will generate test certificates using Linux. You will do t
 
     You may want to edit your dashboard to make the RG tiles and listed resources more accessible.
 
+1. On the Azure portal menu, click **Resource groups**.
+
+1. On the **Resource groups** blade, under **Name**, locate **rg-az220vm**.
+
+1. On the right-hand side of the blade, across from **rg-az220vm**, click **Click to open context menu** (the ellipsis icon - **...**)
+
+1. On the context menu, click **Pin to dashboard**, and then navigate back to your dashboard.
+
+    You can **Edit** your dashboard to rearrange the tiles if that makes it easier to access your resources.
+
+1. On the **rg-az220vm** resource group tile, to open the Edge Gateway virtual machine, click **vm-az220-training-gw0001-{your-id}**.
+
+    > **Note**: Since the resource names are long and some are similar, be sure to select the VM, not the Disk, Public IP address, or Network security group.
+
+1. At the top of the **vm-az220-training-gw0001-{your-id}** blade, click **Connect**, and then click **SSH**.
+
+1. On the **Connect** pane, under **4. Run the example command below to connect to your VM**, copy the example command.
+
+    This is a sample SSH command that can be used to connect to the virtual machine that contains the IP Address for the VM and the Administrator username. The command should be formatted similar to `ssh username@52.170.205.79`.
+
+    > **Note**: If the sample command includes **-i \<private key path\>**, use a text editor to remove that portion of the command, and then copy the updated command into the clipboard.
+
 1. On the Azure portal toolbar, click **Cloud Shell**
 
-1. At the Cloud Shell command prompt, paste the **ssh** command that you noted in the earlier task , and then press **Enter**.
+1. At the Cloud Shell command prompt, paste the **ssh** command that you updated in the text editor, and then press **Enter**.
 
 1. When prompted with **Are you sure you want to continue connecting?**, type **yes** and then press **Enter**.
 
@@ -234,6 +205,8 @@ In this exercise, you will generate test certificates using Linux. You will do t
     ``` bash
     username@vm-az220-training-gw0001-{your-id}:~$
     ```
+
+    > **Important**: When you connect, you may be told that there are outstanding OS updates for the Edge VM. You can omit updates during this lab activity, but in production, you always want to be sure to keep your Edge devices up-to-date.
 
 #### Task 2: Generate certificates
 
@@ -309,12 +282,94 @@ In this exercise, you will generate test certificates using Linux. You will do t
 
     > **Note**: Now that the IoT Edge Device CA certificate has been generated, do not re-run the previous command that generates the root CA certificate. Doing so will overwrite the existing certificate with a new one that will no longer match the **MyEdgeDeviceCA** IoT Edge Device CA certificate that was just generated.
 
-#### Task 3: Configure IoT Edge
+#### Task 3: Add the Microsoft installation packages to the package manager
+
+1. To configure the VM to access the Microsoft installation packages, run the following command:
+
+    ```bash
+    curl https://packages.microsoft.com/config/ubuntu/18.04/multiarch/prod.list > ./microsoft-prod.list
+    ```
+
+1. To add the downloaded package list to the package manager, run the following command:
+
+    ```bash
+    sudo cp ./microsoft-prod.list /etc/apt/sources.list.d/
+    ```
+
+1. To install the packages, the Microsoft GPG public key must be installed. Run the following commands:
+
+    ```bash
+    curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg
+    sudo cp ./microsoft.gpg /etc/apt/trusted.gpg.d/
+    ```
+
+    > **IMPORTANT**: Azure IoT Edge software packages are subject to the license terms located in each package **(usr/share/doc/{package-name}** or the **LICENSE** directory). Read the license terms prior to using a package. Your installation and use of a package constitutes your acceptance of these terms. If you do not agree with the license terms, do not use that package.
+
+#### Task 4: Install a container engine
+
+Azure IoT Edge relies on an OCI-compatible container runtime. For production scenarios, the Moby engine is recommended. The Moby engine is the only container engine officially supported with Azure IoT Edge. Docker CE/EE container images are compatible with the Moby runtime.
+
+1. To update the package lists on the device, run the following command:
+
+    ```bash
+    sudo apt-get update
+    ```
+
+    This command may take a few minutes to run.
+
+1. To install the **Moby** engine, run the following command:
+
+    ```bash
+    sudo apt-get install moby-engine
+    ```
+
+    If prompted to continue, enter **Y**. The install may take a few minutes.
+
+#### Task 5: Install IoT Edge
+
+The IoT Edge security daemon provides and maintains security standards on the IoT Edge device. The daemon starts on every boot and bootstraps the device by starting the rest of the IoT Edge runtime.
+
+1. Usually, updating the package list is a good practice before installing a new package, however the packages were updated in the previous task.To update the package lists on the device, you would run the following command:
+
+    ```bash
+    sudo apt-get update
+    ```
+
+1. To list the versions of **IoT Edge runtime** that are available, run the following command:
+
+    ```bash
+    apt list -a iotedge
+    ```
+
+    > **TIP**: This command is useful if you need to install an earlier version of the runtime.
+
+1. To install the latest version of the **IoT Edge runtime**, run the following command:
+
+    ```bash
+    sudo apt-get install iotedge
+    ```
+
+    If prompted to continue, enter **Y**. The install may take a few minutes.
+
+    > **TIP**: If you wanted to install an earlier version that appeared in the output of the `apt list -a iotedge` command, say **1.0.9-1**, you would use the following command:
+    > ```bash
+    > sudo apt-get install iotedge=1.0.9-1 libiothsm-std=1.0.9-1
+    > ```
+
+1. To confirm that the Azure IoT Edge Runtime is installed on the VM, run the following command:
+
+    ```bash
+    iotedge version
+    ```
+
+    This command outputs the version of the Azure IoT Edge Runtime that is currently installed on the virtual machine.
+
+#### Task 6: Configure IoT Edge
 
 1. To ensure that you are able to configure Azure IoT Edge, enter the following command:
 
     ```bash
-    sudo chmod a+w /etc/aziot/config.toml
+    sudo chmod a+w /etc/iotedge/config.yaml
     ```
 
     To configure Azure IoT Edge, the **/etc/iotedge/config.yaml** configuration file needs to be modified to contain the full path to the certificate and key files on the IoT Edge Device. Before the file can be edited, you must be sure that the **config.yaml** file is not read-only. The command above sets the **config.yaml** file to be writable.
@@ -322,7 +377,7 @@ In this exercise, you will generate test certificates using Linux. You will do t
 1. To open the **config.yaml** file within the vi/vim editor, enter the following command:
 
     ```bash
-    sudo vi /etc/aziot/config.toml
+    sudo vi /etc/iotedge/config.yaml
     ```
 
     > **Note**: If you would rather use a different editor such as **code**, **nano**, or **emacs**, that's fine.
@@ -338,7 +393,7 @@ In this exercise, you will generate test certificates using Linux. You will do t
     >
     > You have to stop Insert mode before you can Save or Quit.
 
-1. To update the **certificates** code lines, find the **trust_bundle_cert** parameter. Uncomment this line and provide the file URI to the root CA certificate file on your device.
+1. To update the **certificates** code lines, remove the leading **'# '** (pound symbol and space) characters and enter the certificate path as shown below:
 
     ```yaml
     certificates:
@@ -402,7 +457,64 @@ In this exercise, you will generate test certificates using Linux. You will do t
 
 ### Exercise 4: Create IoT Edge Device Identity in IoT Hub using Azure Portal
 
+In this exercise, you will use Azure IoT Hub to create a new IoT Edge device identity that you will use for the IoT Edge Transparent Gateway (your IoT Edge VM).
 
+1. If necessary, log in to your Azure portal using your Azure account credentials, and then navigate to your Azure Dashboard.
+
+1. On the **rg-az220** resource group tile, to open your IoT hub, click **iot-az220-training-{your-id}**.
+
+1. On the **iot-az220-training-{your-id}** blade, on the left-side menu under **Automatic Device Management**, click **IoT Edge**.
+
+    The IoT Edge pane allows you to manage the IoT Edge devices connected to the IoT Hub.
+
+1. At the top of the pane, click **Add an IoT Edge device**.
+
+1. On the **Create a device** blade, in the **Device ID** field, enter **vm-az220-training-gw0001-{your-id}**.
+
+    Be sure to replace {your-id} with the value that you created at the beginning of the course. This is the device identity will be used for authentication and access control.
+
+1. Under **Authentication type**, ensure that **Symmetric key** is selected, and leave the **Auto-generate keys** box checked.
+
+    This will have IoT Hub automatically generate the symmetric keys for authenticating the device.
+
+1. Leave the other settings at the default values, and then click **Save**.
+
+    After a moment, the new IoT Edge Device will added to the list of IoT Edge devices.
+
+1. Under **Device ID**, click **vm-az220-training-gw0001-{your-id}**.
+
+1. On the **vm-az220-training-gw0001-{your-id}** blade, copy the **Primary Connection String**.
+
+    A copy button is provided to the right of the value.
+
+1. Save the value of the **Primary Connection String** to a file, making a note about which device it is associated with.
+
+1. On the **vm-az220-training-gw0001-{your-id}** blade, notice that the list of **Modules** is limited to **\$edgeAgent** and **\$edgeHub**.
+
+    The IoT Edge Agent (**\$edgeAgent**) and IoT Edge Hub (**\$edgeHub**) modules are a part of the IoT Edge Runtime. The Edge Hub is responsible for communication, and the Edge Agent deploys and monitors the modules on the device.
+
+1. At the top of the blade, click **Set Modules**.
+
+    The **Set module on device** blade can be used to add additional modules to an IoT Edge Device. For now though, you will be using this blade to ensure the message routing is configured correctly for the IoT Edge Gateway device.
+
+1. At the top of the **Set module on device** blade, click **Routes**.
+
+    Under **Routes**, the editor displays a configured default route for the IoT Edge Device. At this time, it should be configured with a route that sends all messages from all modules to Azure IoT Hub. If the route configuration doesn't match this, then update it to match the following route:
+
+    * **NAME**: `route`
+    * **VALUE**: `FROM /* INTO $upstream`
+
+    The `FROM /*` part of the message route will match all device-to-cloud messages or twin change notifications from any module or leaf device. Then, the `INTO $upstream` tells the route to send those messages to the Azure IoT Hub.
+
+    > **Note**:  To learn more about configuring message routing within Azure IoT Edge, reference the [Learn how to deploy modules and establish routes in IoT Edge](https://docs.microsoft.com/azure/iot-edge/module-composition#declare-routes#declare-routes) documentation article.
+
+1. At the bottom of the blade, click **Review + create**.
+
+    This tab of the **Set module on device** blade displays the deployment manifest for your Edge device. You should see a message at the top of the blade that indicates "Validation passed"
+
+1. Take a moment to review the deployment manifest.
+
+1. At the bottom of the blade, click **Create**.
 
 ### Exercise 5: Setup IoT Edge Gateway Hostname
 
