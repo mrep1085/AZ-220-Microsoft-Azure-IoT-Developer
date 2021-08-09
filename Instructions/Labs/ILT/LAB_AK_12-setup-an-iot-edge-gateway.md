@@ -90,7 +90,7 @@ To ensure these resources are available, complete the following tasks.
 
 The resources have now been created.
 
-### Exercise 2: Deploy a Linux VM and install IoT Edge runtime
+### Exercise 2: Deploy and configure a Linux VM  as an IoT Edge Gateway
 
 In this exercise, you will deploy an Ubuntu Server VM and configure it as an IoT Edge Gateway.
 
@@ -206,9 +206,80 @@ In this task, you will use an ARM (Azure Resource Manager) Template to provision
     * Public FQDN
     * Public SSH
 
+#### Task 3: Open IoT Edge Gateway Device Ports for Communication
+
+Standard IoT Edge devices don't need any inbound connectivity to function, because all communication with IoT Hub is done through outbound connections. Gateway devices are different because they need to receive messages from their downstream devices. If a firewall is between the downstream devices and the gateway device, then communication needs to be possible through the firewall as well. For the Azure IoT Edge Gateway to function, at least one of the IoT Edge hub's supported protocols must be open for inbound traffic from downstream devices. The supported protocols are MQTT, AMQP, and HTTPS.
+
+The IoT communication protocols supported by Azure IoT Edge have the following port mappings:
+
+| Protocol | Port Number |
+| --- | --- |
+| MQTT | 8883 |
+| AMQP | 5671 |
+| HTTPS<br/>MQTT + WS (Websocket)<br/>AMQP + WS (Websocket) | 443 |
+
+The IoT communication protocol chosen for your devices will need to have the corresponding port opened for the firewall that secures the IoT Edge Gateway device. In the case of this lab, an Azure Network Security Group (NSG) is used to secure the IoT Edge Gateway, so Inbound security rules for the NSG will be opened on these ports.
+
+In a production scenario, you will want to open only the minimum number of ports for your devices to communicate. If you are using MQTT, then only open port 8883 for inbound communications. Opening additional ports will introduce addition security attack vectors that attackers could take exploit. It is a security best practice to only open the minimum number of ports necessary for your solution.
+
+In this task, you will configure the Network Security Group (NSG) that secures access to the Azure IoT Edge Gateway from the Internet. The necessary ports for MQTT, AMQP, and HTTPS communications need to be opened so the downstream IoT device(s) can communicate with the gateway.
+
+1. If necessary, log in to your Azure portal using your Azure account credentials.
+
+1. On your Azure dashboard, locate the **rg-az220vm** resource group tile.
+
+    Notice that your resource group tile includes a link to the associated Network security group.
+
+1. On the **rg-az220vm** resource group tile, click **nsg-vm-az220-training-gw0001-{your-id}**.
+
+1. On the **Network security group** blade, on the left-side menu under **Settings**, click **Inbound security rules**.
+
+1. At the top of the **Inbound security rules** pane, click **Add**.
+
+1. On the **Add inbound security rule** pane, ensure **Source** is set to **Any**.
+
+    This allows traffic from any source - in production you may wish to limit this to specific addresses, etc.
+
+1. Under **Destination**, ensure **Destination** is set to **Any**.
+
+    This ensures outgoing traffic can be routed to any location. In production you may wish to limit the addresses.
+
+1. Under **Destination port ranges**, change the value to **8883**.
+
+    This is the port for the MQTT protocol.
+
+1. Under **Protocol**, click **TCP**.
+
+    MQTT uses TCP.
+
+1. Under **Action**, ensure **Allow** is selected.
+
+    As this rule is intended to allow outgoing traffic, **Allow** is selected.
+
+1. Under **Priority**, a default value is supplied - in most cases this will be **1010** - it **must** be unique.
+
+    Rules are processed in priority order; the lower the number, the higher the priority. We recommend leaving gaps between rules - 100, 200, 300, etc. - so that it's easier to add new rules without having to edit existing rules.
+
+1. Under **Name**, change the value to **MQTT**
+
+1. Leave all other settings at the default, and then click **Add**.
+
+    This will define an inbound security rule that will allow communication for the MQTT protocol to the IoT Edge Gateway.
+
+1. After the MQTT rule is added, to open ports for the **AMQP** and **HTTPS** communication protocols, add two more rules with the following values:
+
+    | Destination port ranges | Protocol | Name |
+    | :--- | :--- | :--- |
+    | 5671 | TCP | AMQP |
+    | 443 | TCP | HTTPS |
+
+   > **Note**: You may need to use the **Refresh** button in the toolbar at the top of the pane to see the new rules appear.
+
+1. With these three ports open on the Network Security Group (NSG), the downstream devices will be able to connect to the IoT Edge Gateway using either MQTT, AMQP, or HTTPS protocols.
+
 ### Exercise 3: Download Device CA Certificate
 
-In this exercise, you will generate test certificates using Linux. You will do this using the **vm-az220-training-gw0001-{your-id}** Virtual Machine that you just created and a helper script that you will find within the "Starter" folder for this lab.
+In this exercise, you will explore the **vm-az220-training-gw0001-{your-id}** Virtual Machine that you just created and download the generated test certificates to the cloud shell.
 
 #### Task 1: Connect to the VM
 
@@ -228,7 +299,7 @@ In this exercise, you will generate test certificates using Linux. You will do t
 
 1. On the Azure portal toolbar, click **Cloud Shell**
 
-1. At the Cloud Shell command prompt, paste the **ssh** command that you noted in the earlier task , and then press **Enter**.
+1. At the Cloud Shell command prompt, paste the **ssh** command that you noted in the earlier task, similar to **ssh vmadmin@vm-az220-training-edge0001-dm080321.centralus.cloudapp.azure.com**, and then press **Enter**.
 
 1. When prompted with **Are you sure you want to continue connecting?**, type **yes** and then press **Enter**.
 
@@ -244,7 +315,17 @@ In this exercise, you will generate test certificates using Linux. You will do t
 
 #### Task 2: Explore the IoT Edge configuration
 
-During the initial launch of the VM, a script was executed that configured IoT Edge.
+During the initial launch of the VM, a script was executed that configured IoT Edge. This script performed the following operations:
+
+* Installed **aziot-identity-service** package
+* Installed **aziot-edge** package
+* Downloaded an initial version of **config.toml** (the config file for IoT Edge) to **/etc/aziot/config.toml**
+* Added the device connection string supplied when the ARM template was executed to **/etc/aziot/config.toml**
+* Cloned the [Iot Edge git repository](https://github.com/Azure/iotedge.git) to **/etc/gw-ssl/iotedge**
+* Created a directory **/tmp/lab12** and copied the IoT Edge gateway SSL test tools from **/etc/gw-ssl/iotedge**
+* Generated the test SSL certs in **/tmp/lab12** and copied them to **/etc/aziot**
+* Added the certs to the **/etc/aziot/config.toml**
+* Applied the updated **/etc/aziot/config.toml** to the IoT Edge runtime
 
 1. To determine the version of IoT Edge that was installed, enter the following command:
 
@@ -286,12 +367,14 @@ During the initial launch of the VM, a script was executed that configured IoT E
     uri = "unix:///var/run/docker.sock"
     network = "azure-iot-edge"
 
+    trust_bundle_cert = 'file:///etc/aziot/azure-iot-test-only.root.ca.cert.pem'
 
     [edge_ca]
     cert = 'file:///etc/aziot/iot-edge-device-ca-MyEdgeDeviceCA-full-chain.cert.pem'
     pk = 'file:///etc/aziot/iot-edge-device-ca-MyEdgeDeviceCA.key.pem'
     ```
 
+    During the setup, the **connection_string**, **trust_bundle_cert**, **cert** and **pk** values were updated.
 
 1. To ensure the IoT Edge daemon is running, enter the following command:
 
@@ -344,22 +427,31 @@ During the initial launch of the VM, a script was executed that configured IoT E
 
     If the connection fails, double-check the connection string value in **config.toml**.
 
-#### Task 3: Download device cert
+1. To exit the VM shell, enter the following command:
 
-Next, you need to "download" the **MyEdgeDeviceCA** certificate from the **vm-az220-training-gw0001-{your-id}** virtual machine so that it can be used to configure the IoT Edge device enrollment within Azure IoT Hub Device Provisioning Service.
+    ```bash
+    exit
+    ```
+
+    The connection to the VM should close and the cloud shell prompt should be displayed.
+
+#### Task 3: Download SSL certs from VM to Cloud Shell
+
+Next, you need to "download" the **MyEdgeDeviceCA** certificate from the **vm-az220-training-gw0001-{your-id}** virtual machine so that it can be used to encrypt communications between a leaf device and the IoT Edge gateway.
 
 1. At the Cloud Shell command prompt, to download the **~/lab12** directory from the **vm-az220-training-gw0001-{your-id}** virtual machine to the **Cloud Shell** storage, enter the following commands:
 
     ```bash
     mkdir lab12
-    scp -r -p <username>@<ipaddress>:~/lab12 .
+    scp -r -p <username>@<FQDN>:~/lab12 .
     ```
 
-    > **Note**: Replace the **<username>** placeholder with the username of the admin user for the VM, and replace the **<ipaddress>** placeholder with the IP Address for the VM. Refer to the command that you used to open the SSH session if needed.
+    > **Note**: Replace the **<username>** placeholder with the username of the admin user for the VM, and replace the **<FQDN>** placeholder with the fully qualified domain name for the VM. Refer to the command that you used to open the SSH session if needed.
+    > `scp -r -p vmadmin@vm-az220-training-edge0001-dm080321.centralus.cloudapp.azure.com:/tmp/lab12 .`
 
 1. Enter the Admin password for the VM when prompted.
 
-    Once the command has executed, it will have downloaded a copy of the **~/lab12** directory with the certificate and key files over SSH to the Cloud Shell storage.
+    Once the command has executed, it will have downloaded a copy of the **/tmp/lab12** directory with the certificate and key files over SSH to the Cloud Shell storage.
 
 1. To verify that the files have been downloaded, enter the following commands:
 
@@ -377,108 +469,13 @@ Next, you need to "download" the **MyEdgeDeviceCA** certificate from the **vm-az
 
     Once the files are copied to Cloud Shell storage from the **vm-az220-training-gw0001-{your-id}** virtual machine, you will be able to easily download any of the IoT Edge Device certificate and key files to your local machine as necessary. Files can be downloaded from the Cloud Shell using the `download <filename>` command. You will do this later in the lab.
 
-### Exercise 4: Connect IoT Edge Gateway Device to IoT Hub
+### Exercise 4: Create a Downstream Device
 
-In this exercise, you will connect the IoT Edge Device to Azure IoT Hub.
+In this exercise, a downstream device will be created and connected to IoT Hub via the gateway.
 
-1. Return to the **config.yaml** document in vi/vim:
+#### Task 1: Create Device Identity in IoT Hub
 
-1. Find the **Manual provisioning configuration using a connection string** of the file and uncomment the Manual provisioning configuration using a connection string section, if it isn't already uncommented by removing the leading **'# '** (pound symbol and space) characters and replace `<ADD DEVICE CONNECTION STRING HERE>` with the Connection String you copied previously for your IoT Edge Device:
-
-    ```yaml
-    # Manual provisioning configuration using a connection string
-    provisioning:
-      source: "manual"
-      device_connection_string: "<ADD DEVICE CONNECTION STRING HERE>"
-      dynamic_reprovisioning: false
-    ```
-
-    > **Important**: YAML treats spaces as significant characters. In the lines entered above, this means that there should not be any leading spaces in front of **provisioning:** and that there should be two leading spaces in front of **source:**, **device_connection_string:**, and **dynamic_reprovisioning:**
-
-1. To save your changes and exit the editor, press **Esc** and type **:x** and then press **Enter**
-
-1. To apply the changes, the IoT Edge daemon must be restarted with the following command:
-
-    ```bash
-    sudo systemctl restart iotedge
-    ```
-
-
-1. Wait a few moments.
-
-1. To list all the **IoT Edge Modules** currently running on the IoT Edge Device, enter the following command:
-
-    ```sh
-    iotedge list
-    ```
-
-    After a short time, this command will show the `edgeAgent` and `edgeHub` modules are running. The output will look similar to the following:
-
-    ```text
-    root@vm-az220-training-gw0001-{your-id}:~# iotedge list
-    NAME             STATUS           DESCRIPTION      CONFIG
-    edgeHub          running          Up 15 seconds    mcr.microsoft.com/azureiotedge-hub:1.0
-    edgeAgent        running          Up 18 seconds    mcr.microsoft.com/azureiotedge-agent:1.0
-    ```
-
-    If an error is reported, then you'll need to double check that the configurations are set correctly. For troubleshooting, the **iotedge check --verbose** command can be run to see if there are any errors.
-
-1. Close your Cloud Shell.
-
-### Exercise 7: Open IoT Edge Gateway Device Ports for Communication
-
-For the Azure IoT Edge Gateway to function, at least one of the IoT Edge hub's supported protocols must be open for inbound traffic from downstream devices. The supported protocols are MQTT, AMQP, and HTTPS.
-
-The IoT communication protocols supported by Azure IoT Edge have the following port mappings:
-
-| Protocol | Port Number |
-| --- | --- |
-| MQTT | 8883 |
-| AMQP | 5671 |
-| HTTPS<br/>MQTT + WS (Websocket)<br/>AMQP + WS (Websocket) | 443 |
-
-The IoT communication protocol chosen for your devices will need to have the corresponding port opened for the firewall that secures the IoT Edge Gateway device. In the case of this lab, an Azure Network Security Group (NSG) is used to secure the IoT Edge Gateway, so Inbound security rules for the NSG will be opened on these ports.
-
-In a production scenario, you will want to open only the minimum number of ports for your devices to communicate. If you are using MQTT, then only open port 8883 for inbound communications. Opening additional ports will introduce addition security attack vectors that attackers could take exploit. It is a security best practice to only open the minimum number of ports necessary for your solution.
-
-In this exercise, you will configure the Network Security Group (NSG) that secures access to the Azure IoT Edge Gateway from the Internet. The necessary ports for MQTT, AMQP, and HTTPS communications need to be opened so the downstream IoT device(s) can communicate with the gateway.
-
-1. If necessary, log in to your Azure portal using your Azure account credentials.
-
-1. On your Azure dashboard, locate the **rg-az220vm** resource group tile.
-
-    Notice that your resource group tile includes a link to the associated Network security group.
-
-1. On the **rg-az220vm** resource group tile, click **vm-az220-training-gw0001-{your-id}-nsg**.
-
-1. On the **Network security group** blade, on the left-side menu under **Settings**, click **Inbound security rules**.
-
-1. At the top of the **Inbound security rules** pane, click **Add**.
-
-1. On the **Add inbound security rule** pane, under **Destination port ranges**, change the value to **8883**
-
-1. Under **Protocol**, click **TCP**.
-
-1. Under **Name**, change the value to **MQTT**
-
-1. Leave all other settings at the default, and then click **Add**.
-
-    This will define an inbound security rule that will allow communication for the MQTT protocol to the IoT Edge Gateway.
-
-1. After the MQTT rule is added, to open ports for the **AMQP** and **HTTPS** communication protocols, add two more rules with the following values:
-
-    | Destination port ranges | Protocol | Name |
-    | :--- | :--- | :--- |
-    | 5671 | TCP | AMQP |
-    | 443 | TCP | HTTPS |
-
-   > **Note**: You may need to use the **Refresh** button in the toolbar at the top of the pane to see the new rules appear.
-
-1. With these three ports open on the Network Security Group (NSG), the downstream devices will be able to connect to the IoT Edge Gateway using either MQTT, AMQP, or HTTPS protocols.
-
-### Exercise 8: Create Downstream Device Identity in IoT Hub
-
-In this exercise, you will create a new IoT device identity in Azure IoT Hub for the downstream IoT device. This device identity will be configured so that the Azure IoT Edge Gateway is a parent device for this downstream device.
+In this task, you will create a new IoT device identity in Azure IoT Hub for the downstream IoT device. This device identity will be configured so that the Azure IoT Edge Gateway is a parent device for this downstream device.
 
 1. If necessary, log in to your Azure portal using your Azure account credentials.
 
@@ -520,9 +517,9 @@ In this exercise, you will create a new IoT device identity in Azure IoT Hub for
 
     Be sure to note that this connection string is for the sensor-th-0072 child device.
 
-### Exercise 9: Connect Downstream Device to IoT Edge Gateway
+#### Task 2: Connect Downstream Device to IoT Edge Gateway
 
-In this exercise, you will configure the connection between a pre-built downstream device and your Edge gateway device.
+In this task, you will configure the connection between a pre-built downstream device and your Edge gateway device.
 
 1. If necessary, log in to your Azure portal using your Azure account credentials.
 
@@ -540,7 +537,7 @@ In this exercise, you will configure the connection between a pre-built downstre
     download lab12/certs/azure-iot-test-only.root.ca.cert.pem
     ```
 
-    The Azure IoT Edge Gateway was previously configured in the **/etc/iotedge/config.yaml** file to use this root CA X.509 certificate for encrypting communications with any downstream devices connecting to the gateway. This X.509 certificate will need to be copied to the downstream devices so they can use it to encrypt communications with the gateway.
+    The Azure IoT Edge Gateway was previously configured in the **/etc/aziot/config.toml** file to use this root CA X.509 certificate for encrypting communications with any downstream devices connecting to the gateway. This X.509 certificate will need to be copied to the downstream devices so they can use it to encrypt communications with the gateway.
 
 1. Copy the **azure-iot-test-only.root.ca.cert.pem** X.509 certificate file to the **/Starter/DownstreamDevice** directory where the source code for the downstream IoT device is located.
 
@@ -649,9 +646,9 @@ In this exercise, you will configure the connection between a pre-built downstre
 
 1. Leave the simulated device running while you move on to the next exercise.
 
-### Exercise 10: Verify Event Flow
+#### Task 3: Verify Event Flow
 
-In this exercise, you will use the Azure CLI to monitor the events being sent to Azure IoT Hub from the downstream IoT Device through the IoT Edge Gateway. This will validate that everything is working correctly.
+In this task, you will use the Azure CLI to monitor the events being sent to Azure IoT Hub from the downstream IoT Device through the IoT Edge Gateway. This will validate that everything is working correctly.
 
 1. If necessary, log in to your Azure portal using your Azure account credentials.
 
@@ -671,6 +668,8 @@ In this exercise, you will use the Azure CLI to monitor the events being sent to
 
     The `az iot hub monitor-events` command enables you to monitor device telemetry & messages sent to an Azure IoT Hub. This will verify that events from the simulated device, being sent to the IoT Edge Gateway, are being received by the Azure IoT Hub.
 
+    > **Note**: If prompted `Dependency update (uamqp 1.2) required for IoT extension version: 0.10.13.`, enter **Y*.
+
 1. With everything working correctly, the output from the `az iot hub monitor-events` command will look similar to the following:
 
     ```text
@@ -679,13 +678,19 @@ In this exercise, you will use the Azure CLI to monitor the events being sent to
     {
         "event": {
             "origin": "sensor-th-0072",
-            "payload": "{\"temperature\":30.931512529929872,\"humidity\":78.70672198883571}"
+            "module": "",
+            "interface": "",
+            "component": "",
+            "payload": "{\"temperature\":29.995470051651573,\"humidity\":70.47896838303608}"
         }
     }
     {
         "event": {
             "origin": "sensor-th-0072",
-            "payload": "{\"temperature\":30.699204018199445,\"humidity\":78.04910910224966}"
+            "module": "",
+            "interface": "",
+            "component": "",
+            "payload": "{\"temperature\":28.459910635584922,\"humidity\":60.49697355390386}"
         }
     }
     ```
