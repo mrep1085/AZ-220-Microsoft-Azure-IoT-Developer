@@ -317,7 +317,7 @@ In this exercise, you will register an IoT Edge Device with Azure IoT Hub, and t
 1. To create an IoT Device and configure it as a child of your IoT Edge Device, run the following command:
 
     ```sh
-    az iot hub device-identity create -n iot-az220-training-{your-id} --device-id sensor-th-0084 --pd vm-az220-training-gw0002-{your-id}
+    az iot hub device-identity create -n iot-az220-training-{your-id} --device-id sensor-th-0084
     ```
 
     > **Note**:  Be sure to replace the **iot-az220-training-{your-id}** IoT Hub name with the name of your Azure IoT Hub.
@@ -327,8 +327,6 @@ In this exercise, you will register an IoT Edge Device with Azure IoT Hub, and t
     * `-n`: This required parameter is the shorthand for `--hub-name` and is used to specify the name of the **Azure IoT Hub** to add the new device to.
 
     * `--device-id`: This required parameter is used to specify the **Device ID** of the IoT Device being created.
-
-    * `--pd`: This parameter specifies the **Parent Device** for the IoT Device being created. The value passed in must be the **Device ID** of the **Parent Device** to assign this **Child Device** to.
 
     Notice that this command is not passing in the `--auth-method`. By omitting this parameter, the default value of `shared_private_key` will be used.
 
@@ -379,6 +377,8 @@ In this exercise, you will register an IoT Edge Device with Azure IoT Hub, and t
     > **Note**:  Be sure to replace the **iot-az220-training-{your-id}** IoT Hub name with the name of your Azure IoT Hub.
 
 1. Save a copy of the connection string value for reference later in this lab.
+
+1. IN t he Azure Portal, navagate to iot-az220-training-{your-id}. Select IoT devices. Click on sensor-th-0084. Click on the gear icon next to parent device. Selcect vm-az220-training-gw0002-{your-id}. Click OK.
 
 1. Consider the results of the actions that you just completed.
 
@@ -759,7 +759,7 @@ In this exercise, you will use the Azure Portal user interface for Azure IoT Hub
 
 1. On the **Set modules** blade, under **Iot Edge Modules**, click **Runtime Settings**.
 
-1. On the **Runtime Settings** pane, locate the **Store and forward configuration - time to live (seconds)** field.
+1. On the **Runtime Settings** pane, click the **Edge Hub** tab, locate the **Store and forward configuration - time to live (seconds)** field.
 
 1. In the **Store and forward configuration - time to live (seconds)** textbox, enter **1209600**
 
@@ -771,7 +771,7 @@ In this exercise, you will use the Azure Portal user interface for Azure IoT Hub
 
     The IoT Edge Device will automatically store messages when in a disconnected / offline state. The storage location can be configured using a `HostConfig` object.
 
-1. Locate the **Create Options** field.
+1. Locate the **Container Create Options** field.
 
     Notice that this field contains a `HostConfig` JSON object that can be configured. You will create a `HostConfig` property and an Environment Variable to configure the storage location for your Edge device.
 
@@ -826,7 +826,7 @@ In this exercise, you will use the Azure Portal user interface for Azure IoT Hub
 
 1. Under **Environment Variables**, in the **Value** textbox, enter **/iotedge/storage/**
 
-1. At the bottom of the **Runtime Settings** pane, click **Save**.
+1. At the bottom of the **Runtime Settings** pane, click **Apply**.
 
 1. On the **Set modules on device** blade, click **Review + create**.
 
