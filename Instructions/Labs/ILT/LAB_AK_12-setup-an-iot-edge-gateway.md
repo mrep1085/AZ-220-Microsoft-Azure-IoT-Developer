@@ -156,7 +156,7 @@ In this task, you will use Azure IoT Hub to create a new IoT Edge device identit
 
 #### Task 2: Provision IoT Edge VM
 
-In this task, you will use an ARM (Azure Resource Manager) Template to provision a Linux VM, install the IoT Edge runtime, configure the connection, and then generate X509 certificates.
+In this task, you will use an ARM (Azure Resource Manager) Template to provision a Linux VM, install the IoT Edge runtime, configure the connection, generate X509 certificates, and add them to the IoT Edge runtime configuration.
 
 > **Information**: To learn more about the steps that have been automated, review the following resources:
 >
