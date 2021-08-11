@@ -515,6 +515,59 @@ The IoT Edge security daemon provides and maintains security standards on the Io
 
 #### Task 6: Execute helper scripts
 
+1. On the Azure Cloud Shell toolbar, click **Upload/Download files** (fourth button from the right).
+
+1. In the dropdown, click **Upload**.
+
+1. In the file selection dialog, navigate to lab 14 Setup folder.
+
+    The setup-iot-edge-gateway.sh and setup-remote-iot-edge-gateway.sh script files are located in the Setup folder for lab 14. This is the same folder location that you opened in Visual Studio Code above, when you updated the script files.
+
+    * Allfiles
+      * Labs
+          * 14-Run an IoT Edge device in restricted network and offline
+            * Setup
+
+1. Select the **setup-iot-edge-gateway.sh** and **setup-remote-iot-edge-gateway.sh** script files, and then click **Open**.
+
+    A notification will appear when the upload has completed.
+
+    > **Note**:  These two helper scripts will assist in setting up the Azure IoT Edge on Ubuntu VM to be a Transparent Gateway device. These scripts are meant to be used for development purposes in this lab, and are not meant for production use.
+
+1. To verify that both files have been uploaded, enter the following command:
+
+    ```bash
+    ls
+    ```
+
+    The `ls` command lists the content of the current directory. Ensure that you have both files before continuing.
+
+1. To correct any DOS vs UNIX end-of-line character issues, execute the following commands:
+
+    ```sh
+    dos2unix setup-remote-iot-edge-gateway.sh
+    dos2unix setup-iot-edge-gateway.sh
+    ```
+
+1. To ensure that the **setup-remote-iot-edge-gateway.sh** has read/write/execute permissions, enter the following command:
+
+    ```sh
+    chmod 700 setup-remote-iot-edge-gateway.sh
+    ```
+
+1. To setup your IoT Edge on Ubuntu VM as an IoT Edge Transparent Gateway, enter the following command:
+
+    ```sh
+    ./setup-remote-iot-edge-gateway.sh
+    ```
+
+    If you see a message telling you that the authenticity of host can't be established and asking you if you sure you want to continue connecting, enter **yes**
+
+1. When prompted, enter the password for the IoT Edge on Ubuntu VM.
+
+    There will be a total of 3 prompts to enter the password. These prompts are due to the `ssh` and `scp` commands used to upload the `setup-iot-edge-gateway.sh` helper script to the VM, run the script, and then download the X.509 certificate that will be used later to authenticate the Child IoT Device to the IoT Edge Transparent Gateway.
+
+    When the helper script finishes configuring the IoT Edge on Ubuntu VM to be an IoT Edge Transparent Gateway, the Cloud Shell will download the `azure-iot-test-only.root.ca.cert.pem` X.509 certificate.
 
 1. When prompted, save the X.509 certificate to your Downloads folder.
 
@@ -530,7 +583,59 @@ The IoT Edge security daemon provides and maintains security standards on the Io
 
 ### Exercise 5: Open IoT Edge Gateway Device Inbound Ports using Azure CLI
 
-** ADDED TO ARM **
+For the Azure IoT Edge Gateway to communicate with Child IoT Devices, the TCP/IP port for the devices protocol must be open for **Inbound** communication. Devices can use any one of the three supported protocols to communicate with the IoT Gateway.
+
+These are the TCP/IP port numbers for the supported protocols:
+
+| Protocol | Port Number |
+| --- | --- |
+| MQTT | 8883 |
+| AMQP | 5671 |
+| HTTPS<br/>MQTT + WS (Websocket)<br/>AMQP + WS (Websocket) | 443 |
+
+In this exercise, you will use the Azure CLI to configure the Network Security Group (NSG) that secures access to the Azure IoT Edge Gateway from the Internet. The necessary ports for MQTT, AMQP, and HTTPS communications need to be opened so the downstream IoT device(s) can communicate with the gateway.
+
+1. If necessary, log in to your Azure portal using your Azure account credentials.
+
+    If you have more than one Azure account, be sure that you are logged in with the account that is tied to the subscription that you will be using for this course.
+
+1. On your Dashboard, locate the resource group tile containing your **vm-az220-training-gw0002-{your-id}** virtual machine.
+
+1. Notice that this resource group also contains the **vm-az220-training-gw0002-{your-id}NSG** Network security group (NSG) that was created for the **vm-az220-training-gw0002-{your-id}** virtual machine.
+
+1. On the Azure portal toolbar, click **Cloud Shell**.
+
+    Ensure that the environment is set to use **Bash**.
+
+1. At the Cloud Shell command prompt, to list the name of the Network Security Group (NSG) being used by your Azure IoT Edge Gateway VM, enter the following command:
+
+    ```bash
+    az network nsg list --resource-group rg-az220vm -o table
+    ```
+
+    You should see output similar to the following:
+
+    ```text
+    Location    Name                                    ProvisioningState    ResourceGroup    ResourceGuid
+    ----------  --------------------------------------  -------------------  ---------------  ------------------------------------
+    westus2     vm-az220-training-gw0001-{your-id}-nsg  Succeeded            rg-az220vm       <GUID>
+    westus2     vm-az220-training-gw0002-{your-id}NSG   Succeeded            rg-az220vm       <GUID>
+    ```
+
+1. At the Cloud Shell command prompt, to add **Inbound rules** to the NSG for MQTT, AMQP, and HTTPS communication protocols, enter the following commands:
+
+    ```cmd/sh
+    az network nsg rule create --name MQTT --nsg-name vm-az220-training-gw0002-{your-id}NSG --resource-group rg-az220vm --destination-port-ranges 8883 --priority 101
+    az network nsg rule create --name AMQP --nsg-name vm-az220-training-gw0002-{your-id}NSG --resource-group rg-az220vm --destination-port-ranges 5671 --priority 102
+    az network nsg rule create --name HTTPS --nsg-name vm-az220-training-gw0002-{your-id}NSG --resource-group rg-az220vm --destination-port-ranges 443 --priority 103
+    ```
+
+    Be sure to replace the **{your-id}** placeholders above with the appropriate value before running the commands.
+
+    > **Note**:  In production, it's best practice to only open inbound communication to the communication protocol(s) in use by your IoT devices. If your devices only use MQTT, then only open inbound communication for that port. This will help limit the surface attack area of open ports that could be exploited.
+
+    With the **Inbound rules** added to the **Network Security Group** (NSG), the Child IoT Device will be allowed to communicate with the IoT Edge Gateway virtual machine.
+
 ### Exercise 6: Configure IoT Edge Device Time-to-Live and Message Storage
 
 Configuring your IoT Edge Devices for extended offline scenarios includes specifying the supported period of time that you may be offline, often referred to as Time-to-Live, and specifying your local storage settings.

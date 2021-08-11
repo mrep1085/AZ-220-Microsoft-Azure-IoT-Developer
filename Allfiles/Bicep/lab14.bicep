@@ -2,6 +2,18 @@
 param yourID string
 @description('Course ID - i.e. az220')
 param courseID string
+@description('User name for the Virtual Machine.')
+param adminUsername string
+@allowed([
+  'sshPublicKey'
+  'password'
+])
+@description('Type of authentication to use on the Virtual Machine. SSH key is recommended for production.')
+param authenticationType string = 'password'
+
+@description('SSH Key or password for the Virtual Machine. SSH key is recommended.')
+@secure()
+param adminPasswordOrKey string
 
 var location = resourceGroup().location
 // var groupName = resourceGroup().name
@@ -9,7 +21,8 @@ var iotHubName = 'iot-${courseID}-training-${yourID}'
 var identityName = '${courseID}ID'
 // b24988ac-6180-42a0-ab88-20f7382dd24c is the Contributer role ID
 var contributorRoleDefinitionId = '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c'
-var deviceID = 'sensor-th-0050'
+var gatewayDeviceID = 'vm-az220-training-gw0002-${yourID}'
+var deviceID = 'sensor-th-0084'
 
 module hub './modules/iotHub.bicep' = {
   name: 'deployHub'
@@ -45,7 +58,7 @@ var scriptIdentity = {
   }
 }
 
-module createDevice './modules/device.bicep' = {
+module createDevices './modules/lab14Devices.bicep' = {
   name: 'createDevice'
   dependsOn: [
     hub
@@ -54,10 +67,27 @@ module createDevice './modules/device.bicep' = {
   params: {
     iotHubName: iotHubName
     deviceID: deviceID
+    parentDeviceID: gatewayDeviceID
     scriptIdentity: scriptIdentity
   }
 }
 
+module createVM './modules/lab14VM.bicep' = {
+  name: 'createLab14VM'
+  dependsOn: [
+    createDevices
+  ]
+  params: {
+    virtualMachineName: gatewayDeviceID
+    deviceConnectionString: createDevices.outputs.gatewayConnectionString
+    authenticationType: authenticationType
+    adminUsername: adminUsername
+    adminPasswordOrKey: adminPasswordOrKey
+  }
+
+}
+
 output connectionString string = hub.outputs.connectionString
-output deviceConnectionString string = createDevice.outputs.deviceConnectionString
-output devicePrimaryKey string = createDevice.outputs.primaryKey
+output deviceConnectionString string = createDevices.outputs.deviceConnectionString
+output gatewayConnectionString string = createDevices.outputs.gatewayConnectionString
+output devicePrimaryKey string = createDevices.outputs.primaryKey
