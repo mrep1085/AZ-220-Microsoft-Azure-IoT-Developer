@@ -99,7 +99,7 @@ $DeploymentScriptOutputs['secondaryKey'] = ($deviceDetails.ConnectionString -rep
   }
 }
 
-output deviceConnectionString string = reference(scriptName).outputs.connectionString
-output gatewayConnectionString string = reference(scriptName).outputs.connectionString
+output deviceConnectionString string = reference(scriptName).outputs.deviceConnectionString
+output gatewayConnectionString string = reference(scriptName).outputs.gatewayConnectionString
 output primaryKey string = reference(scriptName).outputs.primaryKey
 output secondaryKey string = reference(scriptName).outputs.secondaryKey

@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.451.19169",
-      "templateHash": "12150570567115772226"
+      "templateHash": "11440854190381880469"
     }
   },
   "parameters": {
@@ -272,7 +272,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.4.451.19169",
-              "templateHash": "14332688180211159024"
+              "templateHash": "5439677889766888236"
             }
           },
           "parameters": {
@@ -348,11 +348,11 @@
           "outputs": {
             "deviceConnectionString": {
               "type": "string",
-              "value": "[reference(variables('scriptName')).outputs.connectionString]"
+              "value": "[reference(variables('scriptName')).outputs.deviceConnectionString]"
             },
             "gatewayConnectionString": {
               "type": "string",
-              "value": "[reference(variables('scriptName')).outputs.connectionString]"
+              "value": "[reference(variables('scriptName')).outputs.gatewayConnectionString]"
             },
             "primaryKey": {
               "type": "string",
