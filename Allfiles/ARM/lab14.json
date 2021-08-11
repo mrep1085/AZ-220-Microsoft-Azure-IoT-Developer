@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.451.19169",
-      "templateHash": "16844331260033388948"
+      "templateHash": "12150570567115772226"
     }
   },
   "parameters": {
@@ -19,6 +19,12 @@
       "type": "string",
       "metadata": {
         "description": "Course ID - i.e. az220"
+      }
+    },
+    "vmResourceGroup": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource Group for VM"
       }
     },
     "adminUsername": {
@@ -79,6 +85,61 @@
       "dependsOn": [
         "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('identityName'))]"
       ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "vmRG",
+      "subscriptionId": "[subscription().subscriptionId]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "resourceGroupName": {
+            "value": "[parameters('vmResourceGroup')]"
+          },
+          "resourceGroupLocation": {
+            "value": "[variables('location')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.4.451.19169",
+              "templateHash": "14609078844642123228"
+            }
+          },
+          "parameters": {
+            "resourceGroupName": {
+              "type": "string"
+            },
+            "resourceGroupLocation": {
+              "type": "string"
+            }
+          },
+          "functions": [],
+          "resources": [
+            {
+              "type": "Microsoft.Resources/resourceGroups",
+              "apiVersion": "2021-01-01",
+              "name": "[parameters('resourceGroupName')]",
+              "location": "[parameters('resourceGroupLocation')]"
+            }
+          ],
+          "outputs": {
+            "resourceGroupName": {
+              "type": "string",
+              "value": "[parameters('resourceGroupName')]"
+            }
+          }
+        }
+      }
     },
     {
       "type": "Microsoft.Resources/deployments",
@@ -314,6 +375,7 @@
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2019-10-01",
       "name": "createLab14VM",
+      "resourceGroup": "[parameters('vmResourceGroup')]",
       "properties": {
         "expressionEvaluationOptions": {
           "scope": "inner"
