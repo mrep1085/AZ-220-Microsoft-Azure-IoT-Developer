@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.451.19169",
-      "templateHash": "11440854190381880469"
+      "templateHash": "4473547612763490289"
     }
   },
   "parameters": {
@@ -738,6 +738,14 @@
     "devicePrimaryKey": {
       "type": "string",
       "value": "[reference(resourceId('Microsoft.Resources/deployments', 'createDevice'), '2019-10-01').outputs.primaryKey.value]"
+    },
+    "PublicFQDN": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('vmResourceGroup')), 'Microsoft.Resources/deployments', 'createLab14VM'), '2019-10-01').outputs.PublicFQDN.value]"
+    },
+    "PublicSSH": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('vmResourceGroup')), 'Microsoft.Resources/deployments', 'createLab14VM'), '2019-10-01').outputs.PublicSSH.value]"
     }
   }
 }

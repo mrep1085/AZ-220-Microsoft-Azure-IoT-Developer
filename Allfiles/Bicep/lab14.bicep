@@ -102,3 +102,6 @@ output connectionString string = hub.outputs.connectionString
 output deviceConnectionString string = createDevices.outputs.deviceConnectionString
 output gatewayConnectionString string = createDevices.outputs.gatewayConnectionString
 output devicePrimaryKey string = createDevices.outputs.primaryKey
+
+output PublicFQDN string = createVM.outputs.PublicFQDN
+output PublicSSH string = createVM.outputs.PublicSSH
