@@ -86,7 +86,9 @@ To ensure these resources are available, complete the following tasks.
 
     Make a note of the outputs for use later:
 
-    * connectionString
+    * publicFQDN
+    * publicSSH
+    * PublicIP
 
 The resources have now been created.
 
@@ -206,7 +208,8 @@ In this task, you will use an ARM (Azure Resource Manager) Template to provision
     * Public FQDN
     * Public SSH
 
-#### Task 3: Open IoT Edge Gateway Device Ports for Communication
+####
+ Task 3: Open IoT Edge Gateway Device Ports for Communication
 
 Standard IoT Edge devices don't need any inbound connectivity to function, because all communication with IoT Hub is done through outbound connections. Gateway devices are different because they need to receive messages from their downstream devices. If a firewall is between the downstream devices and the gateway device, then communication needs to be possible through the firewall as well. For the Azure IoT Edge Gateway to function, at least one of the IoT Edge hub's supported protocols must be open for inbound traffic from downstream devices. The supported protocols are MQTT, AMQP, and HTTPS.
 
@@ -344,7 +347,7 @@ During the initial launch of the VM, a script was executed that configured IoT E
     The output will be similar to:
 
     ```s
-    [provisioning]
+        [provisioning]
     source = "manual"
     connection_string = "HostName=iot-az220-training-dm080221.azure-devices.net;DeviceId=sensor-th-0067;SharedAccessKey=2Zv4wruDViwldezt0iNMtO1mA340tM8fnmxgoQ3k0II="
 
@@ -439,11 +442,11 @@ During the initial launch of the VM, a script was executed that configured IoT E
 
 Next, you need to "download" the **MyEdgeDeviceCA** certificate from the **vm-az220-training-gw0001-{your-id}** virtual machine so that it can be used to encrypt communications between a leaf device and the IoT Edge gateway.
 
-1. At the Cloud Shell command prompt, to download the **~/lab12** directory from the **vm-az220-training-gw0001-{your-id}** virtual machine to the **Cloud Shell** storage, enter the following commands:
+1. At the Cloud Shell command prompt, to download the **/tmp/lab12** directory from the **vm-az220-training-gw0001-{your-id}** virtual machine to the **Cloud Shell** storage, enter the following commands:
 
     ```bash
     mkdir lab12
-    scp -r -p <username>@<FQDN>:~/lab12 .
+    scp -r -p <username>@<FQDN>:/tmp/lab12 .
     ```
 
     > **Note**: Replace the **<username>** placeholder with the username of the admin user for the VM, and replace the **<FQDN>** placeholder with the fully qualified domain name for the VM. Refer to the command that you used to open the SSH session if needed.
@@ -566,19 +569,21 @@ In this task, you will configure the connection between a pre-built downstream d
     The completed connection string values should match the following format:
 
     ```text
-    HostName=<IoT-Hub-Name>.azure-devices.net;DeviceId=sensor-th-0072;SharedAccessKey=<Primary-Key-for-IoT-Device>;GatewayHostName=<DNS-Name-for-IoT-Edge-Device>
+    HostName=<IoT-Hub-Name>.azure-devices.net;DeviceId=sensor-th-0072;SharedAccessKey=<Primary-Key-for-IoT-Device>;GatewayHostName=<HostName-for-IoT-Edge-Device>
     ```
+
+    > **Important**: In the earlier version of the IoTEdge runtime, the **GatewayHostName** was the full DNS name
 
     Be sure to replace the placeholders shown above with the appropriate values:
 
     * **\<IoT-Hub-Name\>**: The Name of the Azure IoT Hub.
     * **\<Primary-Key-for-IoT-Device\>**: The Primary Key for the **sensor-th-0072** IoT device in Azure IoT Hub.
-    * **\<DNS-Name-for-IoT-Edge-Device\>**: The DNS name of the **vm-az220-training-gw0001-{your-id}** Edge device.
+    * **\<Hostname-Name-for-IoT-Edge-Device\>**: The DNS name of the **vm-az220-training-gw0001-{your-id}** Edge device.
 
     The **connectionString** variable with the assembled connection string value will look similar to the following:
 
     ```csharp
-    private readonly static string connectionString = "HostName=iot-az220-training-abc201119.azure-devices.net;DeviceId=sensor-th-0072;SharedAccessKey=ygNT/WqWs2d8AbVD9NAlxcoSS2rr628fI7YLPzmBdgE=;GatewayHostName=vm-az220-training-gw0001-{your-id}.westus2.cloudapp.azure.com";
+    private readonly static string connectionString = "HostName=iot-az220-training-abc201119.azure-devices.net;DeviceId=sensor-th-0072;SharedAccessKey=ygNT/WqWs2d8AbVD9NAlxcoSS2rr628fI7YLPzmBdgE=;GatewayHostName=vm-az220-training-gw0001-{your-id}";
     ```
 
 1. On the **File** menu, click **Save**.

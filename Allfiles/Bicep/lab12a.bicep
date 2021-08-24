@@ -167,5 +167,6 @@ resource vmName 'Microsoft.Compute/virtualMachines@2016-04-30-preview' = {
   }
 }
 
-output PublicFQDN string = 'FQDN: ${publicIPAddressName.properties.dnsSettings.fqdn}'
-output PublicSSH string = 'SSH : ssh ${vmName.properties.osProfile.adminUsername}@${publicIPAddressName.properties.dnsSettings.fqdn}'
+output PublicFQDN string = publicIPAddressName.properties.dnsSettings.fqdn
+output PublicSSH string = 'ssh ${vmName.properties.osProfile.adminUsername}@${publicIPAddressName.properties.dnsSettings.fqdn}'
+output PublicIP string = publicIPAddressName.properties.ipAddress

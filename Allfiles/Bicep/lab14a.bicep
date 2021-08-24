@@ -2,8 +2,6 @@
 param yourID string
 @description('Course ID - i.e. az220')
 param courseID string
-@description('Resource Group for VM')
-param vmResourceGroup string
 @description('User name for the Virtual Machine.')
 param adminUsername string
 @allowed([
@@ -26,14 +24,14 @@ var contributorRoleDefinitionId = '/subscriptions/${subscription().subscriptionI
 var gatewayDeviceID = 'vm-az220-training-gw0002-${yourID}'
 var deviceID = 'sensor-th-0084'
 
-module vmRG './modules/createRG.bicep' = {
-  name: 'vmRG'
-  scope: subscription()
-  params: {
-    resourceGroupName: vmResourceGroup
-    resourceGroupLocation: location
-  }
-}
+// module vmRG './modules/createRG.bicep' = {
+//   name: 'vmRG'
+//   scope: subscription()
+//   params: {
+//     resourceGroupName: vmResourceGroup
+//     resourceGroupLocation: location
+//   }
+// }
 
 module hub './modules/iotHub.bicep' = {
   name: 'deployHub'
@@ -95,7 +93,7 @@ module createVM './modules/lab14VM.bicep' = {
     adminUsername: adminUsername
     adminPasswordOrKey: adminPasswordOrKey
   }
-  scope: resourceGroup(vmResourceGroup)
+  scope: resourceGroup()
 }
 
 output connectionString string = hub.outputs.connectionString

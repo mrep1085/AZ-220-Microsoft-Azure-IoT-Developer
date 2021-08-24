@@ -739,11 +739,11 @@
       "type": "string",
       "value": "[reference(resourceId('Microsoft.Resources/deployments', 'createDevice'), '2019-10-01').outputs.primaryKey.value]"
     },
-    "PublicFQDN": {
+    "publicFQDN": {
       "type": "string",
       "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('vmResourceGroup')), 'Microsoft.Resources/deployments', 'createLab14VM'), '2019-10-01').outputs.PublicFQDN.value]"
     },
-    "PublicSSH": {
+    "publicSSH": {
       "type": "string",
       "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('vmResourceGroup')), 'Microsoft.Resources/deployments', 'createLab14VM'), '2019-10-01').outputs.PublicSSH.value]"
     }
