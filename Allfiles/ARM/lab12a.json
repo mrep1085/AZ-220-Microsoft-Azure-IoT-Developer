@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.451.19169",
-      "templateHash": "4236927352929614080"
+      "templateHash": "12841244634154159240"
     }
   },
   "parameters": {
@@ -229,11 +229,15 @@
   "outputs": {
     "PublicFQDN": {
       "type": "string",
-      "value": "[format('FQDN: {0}', reference(resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName_var'))).dnsSettings.fqdn)]"
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName_var'))).dnsSettings.fqdn]"
     },
     "PublicSSH": {
       "type": "string",
-      "value": "[format('SSH : ssh {0}@{1}', reference(resourceId('Microsoft.Compute/virtualMachines', variables('vmName_var'))).osProfile.adminUsername, reference(resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName_var'))).dnsSettings.fqdn)]"
+      "value": "[format('ssh {0}@{1}', reference(resourceId('Microsoft.Compute/virtualMachines', variables('vmName_var'))).osProfile.adminUsername, reference(resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName_var'))).dnsSettings.fqdn)]"
+    },
+    "PublicIP": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName_var'))).ipAddress]"
     }
   }
 }
