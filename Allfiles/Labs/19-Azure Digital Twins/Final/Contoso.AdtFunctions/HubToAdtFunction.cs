@@ -22,7 +22,7 @@ namespace Contoso.AdtFunctions
         private static readonly HttpClient httpClient = new HttpClient();
 
         [FunctionName("HubToAdtFunction")]
-        public async static void Run([EventGridTrigger] EventGridEvent eventGridEvent, ILogger log)
+        public async static Task Run([EventGridTrigger] EventGridEvent eventGridEvent, ILogger log)
         {
             log.LogInformation(eventGridEvent.Data.ToString());
 

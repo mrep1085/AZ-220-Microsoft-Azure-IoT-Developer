@@ -31,15 +31,10 @@ The following resources will be created:
 In this lab, you will complete the following activities:
 
 * Verify that the lab prerequisites are met (that you have the required Azure resources)
-* Design and develop digital twin models
-  * Create and configure an Azure Digital Twin (ADT) instance
-  * Map IoT device data to ADT models and relationships
-  * Create digital twin models and validate models
 * Create and configure digital twins
-  * Create a digital twin by using the DTDL
+  * Create a digital twin by using the supplied DTDL
   * Build ADT graph using digital twin instances
 * Implement ADT graph interactions (ADT Explorer)
-  * Install and run ADT Explorer
   * Query the ADT Graph
   * Update properties on ADT entities in the graph
 * Integrate ADT with upstream and downstream systems
@@ -150,9 +145,13 @@ In this exercise, the Azure portal will be used to create an Azure Digital Twins
 
 1. For the **Resource group**, select **rg-az220**.
 
-1. In the **Location** dropdown, select the region where your Azure IoT Hub is provisioned.
-
 1. For the **Resource name**, enter **adt-az220-training-{your-id}**.
+
+1. In the **Region** dropdown, select the region where your Azure IoT Hub is provisioned (or the closest region available).
+
+1. Under **Grant access to resource**, to ensure the current user can use the **Digital Twins Explorer** app, check **Assign Azure Digital Twins Owner Role**.
+
+    > **Note**: To manage the elements within an instance, a user needs access to Azure Digital Twins data plane APIs. Select the suggested role above grants the current user full access to the data plane APIs. You can also use Access Control (IAM) to choose appropriate roles later. You can learn more about Azure Digital Twins Security [here](https://docs.microsoft.com/azure/digital-twins/concepts-security)
 
 1. To review the values entered, click **Review + create**.
 
@@ -188,276 +187,11 @@ In this exercise, the Azure portal will be used to create an Azure Digital Twins
 
 1. Save the **adt-connection.txt** file.
 
-#### Task 3: Configure the ADT Role assignment
-
-1. To update user roles, on the left-side menu, click **Access control (IAM)**.
-
-1. To view the current user access, click **View my access**.
-
-    A pane will be displayed that lists the current user assignments. Currently, the user will have the **Service Administrator** role. This role was assigned during the ADT creation.
-
-1. Close the **assignments** pane.
-
-1. To view existing role assignments for all users, select the **Role assignments** tab.
-
-    Your current account user should be listed beneath the **Owner** role.
-
-    > **Note**: If the following error is displayed, you can ignore it. This lab does not require access to view other role assignments.
-    > ![Permission Error](media/LAB_AK_19-permission-error.png)
-
-1. To add a new assignment, click **+ Add** and then click **Add role assignment**.
-
-1. On the **Add role assignment** pane, in the **Role** drop-down, select **Azure Digital Twins Data Owner**
-
-1. Ensure the **Assign access to** field value is **User, group or service principal**.
-
-    **Note**: There are many types of security principal that can be chosen including **Function Apps**, **Logic Apps**, **Virtual Machines**, etc.
-
-    A list of available users should be provided.
-
-1. To filter the list of users, in the **Select** field, enter enough of your name or email so that your full name and email address appears in the search results list.
-
-1. Select the entry that corresponds to your user account.
-
-    If you are unsure which account you are using, open an **Azure Shell** and run the following command:
-
-    ```bash
-    az ad signed-in-user show --query "userPrincipalName" -o tsv
-    ```
-
-    The output will show which account should be selected.
-
-    > **Note**: User accounts that are managed in Azure Active Directory have a different format than user accounts that are managed in an external authority such as a Microsoft Account created for Skype, Xbox, etc. Ensure you chose the correct entry for the account you are logged in as. For example:
-    > * **joe@contoso.com** - user account managed by AAD with a custom domain
-    > * **joe@joesazure.onmicrosoft.com** - user account managed by AAD with the default domain
-    > * **joe.smith_gmail.com#EXT#@joesazure.onmicrosoft.com** - user account managed by the external Microsoft Account authority that has been added as a guest to AAD with the default domain
-
-1. To assign the role, click **Save**.
-
-    After a few moments, the role will be assigned and the current user should be listed under the **Azure Digital Twins Data Owner** role.
-
-    > **Note**: It may take longer to display an external user. You can try clicking **Refresh** in the toolbar, or navigating to the **Overview** pane and back to the **Access control (IAM)** pane.
-
 The Azure Digital Twin resource is now created and the user account has been updated so that the resource can be accessed via APIs.
 
-### Exercise 3 - Map IoT device data to ADT models and relationships
+### Exercise 3 - Create a graph of the models
 
-In this exercise, the Digital Twins Definition Language (DTDL) will be used to define a subset of the models that represent the Contoso Cheese Factory. A model defines the characteristics of a real-world object, such as a cheese production line. The level of detail, and the size of the object, depend upon the needs of the business. The object can be as small as a temperature sensor, as grand as a building or factory, and as diverse as a sensor, a person, a vehicle, or a process. It can be about anything relevant to your operations. Models have names, and later in this lab you'll create digital twin instances of the models.
-
-> **NOTE**: For more information about DTDL, a full list of required/optional entries, and the complete list of acceptable units, see [the DTDL spec](https://github.com/Azure/opendigitaltwins-dtdl/blob/master/DTDL/v2/dtdlv2.md).
-
-As mentioned earlier, when it comes to representing a business via models, much of the taxonomy and detail will be driven by the needs of the business: these include the problems to be solved and the simulations to be created. However, certain aspects of the models will be driven by the IoT devices that form part of the solution - more specifically, the properties, telemetry and operations that they perform.
-
-In this exercise, the relationship between a Cheese Cave Device and a Cheese Cave will be considered and a model hierarchy will be created. Then, the characteristics of the Cheese Cave Device will be considered and mapped to the capabilities of a digital twin model.
-
-> **NOTE**: The Cheese Cave Device simulator (code project) that you developed earlier in the course will be used to define the device characteristics for the purpose of this exercise. The source code is included in the **Starter** folder for this lab.
-
-#### Task 1 - Consider the device capabilities
-
-As with any type of design work, designing a ADT model involves a certain amount of planning. When the ADT model will represent an IoT device, the planning includes an investigation of how to map the characteristics of the IoT device to the fields of the corresponding ADT model. The following steps should be completed for each IoT device type.
-
-1. Evaluate the IoT hub device twin.
-
-    The Cheese Cave Device uses a device twin (not to be confused with a digital twin) to specify the following settings:
-
-    * Desired temperature in Fahrenheit
-    * Desired humidity in a range of 0 - 100
-
-1. Evaluate the contents of the IoT device messages.
-
-    The Cheese Cave Device sends messages to an IoT hub that contain:
-
-    * Properties
-        * sensorID - current sensor ID (set to **S1**)
-        * fanAlert - **true** if the fan is in a failed state, otherwise **false**.
-        * temperatureAlert - only present if true - set to **true** if temperature is +/- 5 degrees from desired temperature
-        * humidityAlert - only present if true - set to **true** if humidity is +/- 10 of desired humidity percentage
-    * Telemetry
-        * temperature - current temperature in Fahrenheit
-        * humidity - current humidity in range 0 - 100
-
-1. Evaluate any additional Cloud-to-Device or Device-to-Cloud interactions.
-
-    The Cheese Cave Device supports the following direct method:
-
-    * SetFanState - attempts to turn the cheese cave fan on or off (fan may fail)
-
-    For your devices, you may also want to consider message enhancements if any are being applied.
-
-    The next step will be to consider how to represent the IoT device characteristics within in the ADT model.
-
-1. Recall that for an ADT model there are four main fields within the DTDL: *Properties*, *Telemetry*, *Components*, and *Relationships*.
-
-1. Consider mapping the properties specified in both the IoT device twin and the device-to-cloud messages to Properties of the ADT model.
-
-    You may want your ADT model to include a direct mapping of all IoT device properties, or you could choose a subset that fits your business requirements. The current version of Azure Digital Twins does not provide automatic integration between IoT hub (device properties) and ADT model Properties.
-
-1. Consider mapping the IoT device telemetry measurements to corresponding ADT model Telemetry fields.
-
-1. Consider any additional device characteristics or interactions that may need to be represented in the ADT model.
-
-    Some characteristics of an IoT device may not directly map to an ADT model. In the case of our Cheese Cave Device, there is a gap when it comes to the direct method call **SetFanState**. There is no direct mapping for a direct method - the DTDL specification does include a definition for commands, however ADT does not currently support them. Therefore the direct method cannot be mapped and code must be written as part of some business logic  - usually implemented within an Azure Function.
-
-#### Task 2 - Construct the DTDL code for Cheese Cave Device properties
-
-> **Note**: In this task, you will be constructing DTDL code that could be used in an ADT model. We leave it up to you to decide which tool you use, and suggest that either Visual Studio Code or Notepad will work well for purpose of this exercise.
-
-1. Construct the DTDL code corresponding to the IoT device message property **sensorID**.
-
-    This property is a string value and could be expressed in a DTDL fragment as:
-
-    ```json
-    {
-        "@type": "Property",
-        "name": "sensorID",
-        "schema": "string",
-        "description": "Manufacturer Sensor ID",
-        "writable": true
-    }
-    ```
-
-    In accordance with the DTDL specification for a Property field, the **@type** is required and must at least have a value of **Property** and may optionally be an array that defines a semantic type as well:
-
-    > **TIP**: You can refer back to the following resource for the available semantic types:
-    > * [Digital Twins Definition Language (DTDL)](https://github.com/Azure/opendigitaltwins-dtdl/blob/master/DTDL/v2/dtdlv2.md#semantic-types)
-
-    The **name** property is required and must uniquely identify the property within the current model definition. In this example, the **name** matches the mapped property from the device message - this is not required, however it does simplify the mapping process.
-
-    The **schema** property is required and defines the data type of the property - in this case, a **string**. The schema may be defined as a [Primitive schema](https://github.com/Azure/opendigitaltwins-dtdl/blob/master/DTDL/v2/dtdlv2.md#primitive-schemas) or a [Complex schema](https://github.com/Azure/opendigitaltwins-dtdl/blob/master/DTDL/v2/dtdlv2.md#complex-schemas) - however it may not be an **Array** or a complex schema that contains an **Array**.
-
-    The **description** property is optional and is a localizable description for display.
-
-    > **TIP**: You can review the following resource for more information on localization:
-    > * [Display string localization](https://github.com/Azure/opendigitaltwins-dtdl/blob/master/DTDL/v2/dtdlv2.md#display-string-localization).
-
-    The **writable** property is optional an indicates that the property is writable by an external source. As an example, if the value will be updated from a device message, the **writable** value should be **true**. The default value is false (read-only).
-
-    > **TIP**: These are just some of the available properties for defining a Digital Twin Property. Review the following resource to see the full list:
-    > * [DTDL Property](https://github.com/Azure/opendigitaltwins-dtdl/blob/master/DTDL/v2/dtdlv2.md#property)
-
-1. Construct the DTDL code corresponding to the IoT device message property **desiredTemperature**.
-
-    This property is a double value and could be expressed in a DTDL fragment as:
-
-    ```json
-    {
-        "@type": ["Property", "Temperature"],
-        "name": "desiredTemperature",
-        "schema": "double",
-        "unit": "degreeFahrenheit",
-        "description": "Cave desired temperature in Fahrenheit",
-        "writable": true
-    }
-    ```
-
-    Notice that the **@type** value is declared as an array, and contains the required **Property** value as well as the **Temperature** semantic type. By adding a semantic type, the **unit** value can be added, specifying that the property values will be in Fahrenheit.
-
-    As expected, the **schema** value is **double**.
-
-1. Update your DTDL with the remaining device properties:
-
-    ```json
-    {
-        "@type": "Property",
-        "name": "sensorID",
-        "schema": "string",
-        "description": "Manufacturer Sensor ID",
-        "writable": true
-    },
-    {
-        "@type": ["Property", "Temperature"],
-        "name": "desiredTemperature",
-        "schema": "double",
-        "unit": "degreeFahrenheit",
-        "description": "Cave desired temperature in Fahrenheit",
-        "writable": true
-    },
-    {
-        "@type": "Property",
-        "name": "desiredHumidity",
-        "schema": "double",
-        "description": "Cave desired humidity in percent",
-        "writable": true
-    },
-    {
-        "@type": "Property",
-        "name": "fanAlert",
-        "schema": "boolean",
-        "description": "Fan failure alert",
-        "writable": true
-    },
-    {
-        "@type": "Property",
-        "name": "temperatureAlert",
-        "schema": "boolean",
-        "description": "Over/Under desired temperature alert",
-        "writable": true
-    },
-    {
-        "@type": "Property",
-        "name": "humidityAlert",
-        "schema": "boolean",
-        "description": "Over/Under desired humidity alert",
-        "writable": true
-    },
-    ```
-
-    As you can see, the additional properties follow the same pattern.
-
-#### Task 3 - Construct the DTDL code for Cheese Cave Device telemetry
-
-1. Construct the DTDL code corresponding to the IoT device telemetry **temperature** values.
-
-    Consider the device message telemetry value **temperature**. This is a double value containing a temperature reading in Fahrenheit and could be expressed in a DTDL fragment as:
-
-    ```json
-    {
-        "@type": ["Telemetry", "Temperature"],
-        "name": "temperature",
-        "schema": "double",
-        "unit": "degreeFahrenheit",
-        "description": "Current measured temperature"
-    }
-    ```
-
-    A **Telemetry** field is defined in a similar way to a **Property**. The **@type** is required and must at least have a value of **Telemetry** and, similar to a **Property**, may optionally be an array that defines a semantic type as well.
-
-    The **name** property is required and must uniquely identify the field within the current model definition. In this example, the **name** matches the mapped value from the device message - this is not required, however it does simplify the mapping process.
-
-    The **schema** property is required and defines the data type of the telemetry value - in this case, a **double**. The schema may be defined as a [Primitive schema](https://github.com/Azure/opendigitaltwins-dtdl/blob/master/DTDL/v2/dtdlv2.md#primitive-schemas) or a [Complex schema](https://github.com/Azure/opendigitaltwins-dtdl/blob/master/DTDL/v2/dtdlv2.md#complex-schemas) - however it may not be an **Array** or a complex schema that contains an **Array**.
-
-    The **description** property is optional and is a localizable description for display.
-
-    Notice that there is no **writable** value in the above snippet or in the specification - **Telemetry** values are expected to be written from an external source.
-
-    > **TIP**: These are just some of the available properties for defining a Telemetry field within an ADT model. Review the following resource to see the full list:
-    > * [DTDL Telemetry](https://github.com/Azure/opendigitaltwins-dtdl/blob/master/DTDL/v2/dtdlv2.md#telemetry)
-
-1. Construct the DTDL code for the device message telemetry **humidity** values.
-
-    > **TIP**: Recall that the humidity values are specified without any units (a relative humidity measurement between 0 and 100).
-
-1. Compare your completed DTDL code with to the following:
-
-    ```json
-    {
-        "@type": ["Telemetry", "Temperature"],
-        "name": "temperature",
-        "unit": "degreeFahrenheit",
-        "description": "Current measured temperature",
-        "schema": "double"
-    },
-    {
-        "@type": "Telemetry",
-        "name": "humidity",
-        "description": "Current measured humidity",
-        "schema": "double"
-    }
-    ```
-
-### Exercise 4 - Create digital twin models and validate models
-
-In the previous exercise, the Cheese Cave Device message content was mapped to DTDL **Property** and **Telemetry** field definitions. In order to use these DTDL code fragments, they must be incorporated into an **Interface** (the top-level code item for a model). The **Interface** for a Cheese Cave Device model would form just a small part of the Azure Digital Twins environment for a Contoso Cheese Factory. However, modeling an environment that represents an entire factory is beyond the scope of this course. With this in mind, a greatly simplified environment that focuses on a Cheese Cave Device model, an associated Cheese Cave model, and a Factory model will be considered instead. The model hierarchy is as follows:
+As part of a modeling activity, analysts would consider many factors, such as the Cheese Cave Device message content, and create mappings in DTDL **Property** and **Telemetry** field definitions. In order to use these DTDL code fragments, they would be incorporated into an **Interface** (the top-level code item for a model). However, the **Interface** for a Cheese Cave Device model would form just a small part of the Azure Digital Twins environment for a Contoso Cheese Factory. As modeling an environment that represents an entire factory is beyond the scope of this course, a greatly simplified environment that focuses on a Cheese Cave Device model, an associated Cheese Cave model, and a Factory model will be considered instead. The model hierarchy is as follows:
 
 * Cheese Factory Interface
 * Cheese Cave Interface
@@ -503,554 +237,7 @@ And the relationships between IDs could be:
 >
 >  The complete models referenced in this exercise are available in this folder location.
 
-#### Task 1 - Creating the Factory Interface
-
-The Contoso Cheese company's business analysts have determined that the Cheese Factory model should be simple and have the following properties:
-
-| Name        | Schema | Description                                                                                              |
-| :---------- | :----- | :------------------------------------------------------------------------------------------------------- |
-| FactoryName | String | the name of the factory                                                                                  |
-| GeoLocation | Object | the location of the factory - a complex property with Latitude and Longitude values expressed as doubles |
-
-In addition, the Factory will have a relationship with Cheese Caves.
-
-1. To begin the task of creating the Cheese Factory model, open Visual Studio Code.
-
-    > **NOTE**: Microsoft provides an extension for Visual Studio Code, the **DTDL Editor for Visual Studio Code**, that makes using DTDL more efficient by taking full advantage of the following key features:
-    >
-    > * Create interfaces from the command palette with predefined or customized templates.
-    > * Intellisense to help you with the language syntax (including auto-completion).
-    > * Use predefined code snippets to develop DTDL efficiently.
-    > * Syntax validation.
-
-1. To use the DTDL extension to create a new interface file, open the VS Code Command Palette, and then select **DTDL: Create Interface**.
-
-    The Command Palette is available on the View menu.
-
-1. When prompted to **Select folder**, browse to the location you wish to store the interface files.
-
-1. When prompted for the **Interface name**, enter **CheeseFactoryInterface**.
-
-    Visual Studio Code will open the folder location chosen and will create a file, **CheeseFactoryInterface.json**
-
-1. Select the **CheeseFactoryInterface.json** to open it for editing - the contents will be similar to:
-
-    ```json
-    {
-        "@context": "dtmi:dtdl:context;2",
-        "@id": "dtmi:com:example:CheeseFactoryInterface;1",
-        "@type": "Interface",
-        "displayName": "CheeseFactoryInterface",
-        "contents": [
-            {
-                "@type": "Telemetry",
-                "name": "temperature",
-                "schema": "double"
-            },
-            {
-                "@type": "Property",
-                "name": "deviceStatus",
-                "schema": "string"
-            },
-            {
-                "@type": "Command",
-                "name": "reboot",
-                "request": {
-                    "name": "delay",
-                    "schema": "integer"
-                }
-            }
-        ]
-    }
-    ```
-
-    This starting template illustrates the required content and structure for an Interface file. Of course, it must be customized to suit the requirements for the Contoso Cheese Factory.
-
-    The **@context** property is required and, for this version of the DTDL, it must be set to **dtmi:dtdl:context;2**.
-
-    The **@type** property is required and must be set to **Interface**.
-
-    The remaining properties will be discussed in the following steps.
-
-1. Locate the **@id** property and update the value to **"dtmi:com:contoso:digital_factory:cheese_factory;1"**.
-
-    The **@id** property is required and should uniquely identify the Interface. The value used above utilizes the following taxonomy for the `<path>`:
-
-    * The source of the model - **com:contoso**
-    * The model category - **digital_factory**
-    * The type within the category - **cheese_factory**
-
-    The version of the model is **1**
-
-1. To provide an improved display name, locate the **displayName** property and update the value to **"Cheese Factory - Interface Model"**.
-
-    > **NOTE**: The **displayName** value can be localized.
-
-1. To remove the sample properties, locate the **contents** array and delete the contents.
-
-    After editing, your CheeseFactoryInterface.json file should look similar to the following:
-
-    ```json
-    {
-        "@context": "dtmi:dtdl:context;2",
-        "@id": "dtmi:com:contoso:digital_factory:cheese_factory;1",
-        "@type": "Interface",
-        "displayName": "Cheese Factory - Interface Model",
-        "contents": [
-        ]
-    }
-    ```
-
-1. To add a DTDL Property for the **FactoryName**, update the **contents** property as follows:
-
-    ```json
-    "contents": [
-        {
-            "@type": "Property",
-            "name": "FactoryName",
-            "schema": "string",
-            "writable": true
-        }
-    ]
-    ```
-
-    Because the **contents** property is defined as a JSON array, DTDL Properties and Telemetry are added as objects within the array.
-
-1. To prepare to add another Property, position the cursor after the closing curly brace `}` above, add a comma **,** and press **Enter**.
-
-1. To use a code snippet to create **Property**, enter **dtp** and select the **Add DTDL Property** snippet (or press **TAB**):
-
-    ![DDTL Property Code Snippet](media/LAB_AK_19-dtp-snippet.png)
-
-    Once the snippet has been expanded. the code will be similar to:
-
-    ![Expanded DDTL Property Snippet](media/LAB_AK_19-dtp-snippet-expanded.png)
-
-1. Set the **name** property value to **GeoLocation**.
-
-    According to the business requirements, the **GeoLocation** DTDL property is a complex property consisting of Latitude and Longitude. One way to specify this is to include an inline schema. A schema is used to describe the on-the-wire or serialized format of the data in a digital twin interface.
-
-    > **TIP**: To learn more about schemas, review the following resource:
-    > * [DTDL Schemas](https://github.com/Azure/opendigitaltwins-dtdl/blob/master/DTDL/v2/dtdlv2.md#schemas)
-
-1. To add a complex schema definition for **GeoLocation**, update the **schema** property value as follows:
-
-    ```json
-    {
-        "@type": "Property",
-        "name": "GeoLocation",
-        "schema": {
-            "@id": "dtmi:com:contoso:digital_factory:custom_schema:GeoCord;1",
-            "@type": "Object",
-            "fields": [
-                {
-                    "@id": "dtmi:com:contoso:digital_factory:custom_schema:GeoCord:lat;1",
-                    "name": "Latitude",
-                    "schema": "double"
-                },
-                {
-                    "@id": "dtmi:com:contoso:digital_factory:custom_schema:GeoCord:lon;1",
-                    "name": "Longitude",
-                    "schema": "double"
-                }
-            ]
-        }
-    },
-    ```
-
-    Notice that the schema has an **@id** value (if no value is added, one is auto generated) that follows the DTMI specification and extends the taxonomy used to define the Factory.
-
-    The **@type** property specifies the type of complex schema - currently the following complex schemas are provided: **Array**, **Enum**, **Map**, and **Object**. In this example the **Object** type is used. An **Object** describes a data type made up of named fields (like a struct in C). The fields in an Object map can be primitive or complex schemas.
-
-    The **fields** property is set to an array of field descriptions, one for each field in the **Object**. Each field has an optional **@id**, a required **name** and a required **type**.
-
-    > **TIP**: To learn more about the available complex types, review the following resources:
-    >
-    > * [Array](https://github.com/Azure/opendigitaltwins-dtdl/blob/master/DTDL/v2/dtdlv2.md#array)
-    > * [Enum](https://github.com/Azure/opendigitaltwins-dtdl/blob/master/DTDL/v2/dtdlv2.md#enum)
-    > * [Map](https://github.com/Azure/opendigitaltwins-dtdl/blob/master/DTDL/v2/dtdlv2.md#map)
-    > * [Object](https://github.com/Azure/opendigitaltwins-dtdl/blob/master/DTDL/v2/dtdlv2.md#object)
-
-1. To add the relationship between the Factory and the Cave (the Cave interface will be defined in the next task), add the following JSON object to the **content** array:
-
-    ```json
-    {
-        "@type": "Relationship",
-        "@id": "dtmi:com:contoso:digital_factory:cheese_factory:rel_has_caves;1",
-        "name": "rel_has_caves",
-        "displayName": "Has caves",
-        "target": "dtmi:com:contoso:digital_factory:cheese_cave;1"
-    }
-    ```
-
-    The **@type** property is required and must be set to **Relationship**.
-
-    The **@id** is optional - if no value is added, one is auto-generated. The value used here uses a structure that indicates the relationship belongs to the **cheese_factory**.
-
-    The **name**  property is required and is the "programming" name of the relationship - relationships are referred to by this value during queries, etc.
-
-    The **displayName** property is optional and is localizable.
-
-    Finally, the **target** property - although optional, this specifies the interface **@id** value of the target. A missing **target** means the relationship can target any interface. The value used here, **"dtmi:com:contoso:digital_factory:cheese_cave;1"** targets a Cave model that will be created in the next task.
-
-    > **TIP**: There are more optional properties available, including two that can constrain the minimum and maximum number of instances of this relationship, etc. To learn more, review the documentation below:
-    > * [DTDL Relationships](https://github.com/Azure/opendigitaltwins-dtdl/blob/master/DTDL/v2/dtdlv2.md#relationship)
-
-1. Once complete, the Interface definitions should look like:
-
-    ```json
-    {
-        "@context": "dtmi:dtdl:context;2",
-        "@id": "dtmi:com:contoso:digital_factory:cheese_factory;1",
-        "@type": "Interface",
-        "displayName": "Cheese Factory - Interface Model",
-        "contents": [
-            {
-                "@type": "Property",
-                "name": "FactoryName",
-                "schema": "string",
-                "writable": true
-            },
-            {
-                "@type": "Property",
-                "name": "GeoLocation",
-                "schema": {
-                    "@id": "dtmi:com:contoso:digital_factory:custom_schema:GeoCord;1",
-                    "@type": "Object",
-                    "fields": [
-                        {
-                            "@id": "dtmi:com:contoso:digital_factory:custom_schema:GeoCord:lat;1",
-                            "name": "Latitude",
-                            "schema": "double"
-                        },
-                        {
-                            "@id": "dtmi:com:contoso:digital_factory:custom_schema:GeoCord:lon;1",
-                            "name": "Longitude",
-                            "schema": "double"
-                        }
-                    ]
-                }
-            },
-            {
-                "@type": "Relationship",
-                "@id": "dtmi:com:contoso:digital_factory:cheese_factory:rel_has_caves;1",
-                "name": "rel_has_caves",
-                "displayName": "Has caves",
-                "target": "dtmi:com:contoso:digital_factory:cheese_factory:cheese_cave;1"
-            }
-        ]
-    }
-    ```
-
-#### Task 2 - Review the Cheese Cave Interface
-
-The Contoso Cheese company's business analysts have determined that the Cheese Cave model will have properties that track the current state of the cave, as well as the desired temperature and humidity for that cave. Often, these values will be duplicating those reported by the connected Cheese Cave Device - however the devices may be replaced or relocated to another cave. Rolling the values up from the device to the cave ensures that the latest state of the cave is available.
-
-The full list of Properties identified for the Cheese Cave model is as follows:
-
-| Name               | Schema  | Description                                   |
-| :----------------- | :------ | :-------------------------------------------- |
-| inUse              | boolean | Indicates whether the Cheese Cave is in use |
-| temperatureAlert   | boolean | Over/under desired temperature alert          |
-| humidityAlert      | boolean | Over/under desired humidity alert             |
-| fanAlert           | boolean | Fan failure alert                             |
-| temperature        | double  | Last measured temperature in Fahrenheit       |
-| humidity           | double  | Last measured humidity                        |
-| desiredTemperature | double  | Cave desired temperature in Fahrenheit      |
-| desiredHumidity    | double  | Cave desired humidity in percent            |
-
-1. Review the Interface definition for the **Cheese Cave Interface**.
-
-    ```json
-    {
-        "@id": "dtmi:com:contoso:digital_factory:cheese_factory:cheese_cave;1",
-        "@type": "Interface",
-        "displayName": "Cheese Cave - Interface Model",
-        "@context": "dtmi:dtdl:context;2",
-        "contents": [
-            {
-                "@type": "Property",
-                "name": "inUse",
-                "schema": "boolean",
-                "description": "Indicates whether the Cheese Cave is in use",
-                "writable": true
-            },
-            {
-                "@type": "Property",
-                "name": "temperatureAlert",
-                "schema": "boolean",
-                "description": "Over/under desired temperature alert",
-                "writable": true
-            },
-            {
-                "@type": "Property",
-                "name": "humidityAlert",
-                "schema": "boolean",
-                "description": "Over/under desired humidity alert",
-                "writable": true
-            },
-            {
-                "@type": "Property",
-                "name": "fanAlert",
-                "schema": "boolean",
-                "description": "Fan failure alert",
-                "writable": true
-            },
-            {
-                "@type": ["Property", "Temperature"],
-                "name": "temperature",
-                "schema": "double",
-                "unit": "degreeFahrenheit",
-                "description": "Last measured temperature",
-                "writable": true
-            },
-            {
-                "@type": "Property",
-                "name": "humidity",
-                "schema": "double",
-                "description": "Last measured humidity",
-                "writable": true
-            },
-            {
-                "@type": ["Property", "Temperature"],
-                "name": "desiredTemperature",
-                "schema": "double",
-                "unit": "degreeFahrenheit",
-                "description": "Cave desired temperature in Fahrenheit",
-                "writable": true
-            },
-            {
-                "@type": "Property",
-                "name": "desiredHumidity",
-                "schema": "double",
-                "description": "Cave desired humidity in percent",
-                "writable": true
-            },
-            {
-                "@type": "Relationship",
-                "@id": "dtmi:com:contoso:digital_factory:cheese_cave:rel_has_devices;1",
-                "name": "rel_has_devices",
-                "displayName": "Has devices",
-                "target": "dtmi:com:contoso:digital_factory:cheese_cave:cheese_cave_device;1"
-            }
-        ]
-    }
-    ```
-
-    Notice how the property definitions align with the requirements. A Relationship to Cheese Cave Device is also provided.
-
-    > **NOTE**: The completed model file **CheeseCaveInterface.json** is available in the **Final\Models** folder associated with this lab.
-
-#### Task 3 - Review the Cheese Cave Device Interface
-
-In this task, the mapped property and telemetry values identified in **Exercise 2 - Map IoT device data to ADT models and relationships** are incorporated into an Interface definition.
-
-| Property Name      | Schema  | Description                              |
-| :----------------- | :------ | :--------------------------------------- |
-| sensorID           | string  | Manufacturer Sensor ID                   |
-| desiredTemperature | double  | Cave desired temperature in Fahrenheit |
-| desiredHumidity    | double  | Cave desired humidity in percent       |
-| fanAlert           | boolean | Fan failure alert                        |
-| temperatureAlert   | boolean | Over/under desired temperature alert     |
-| humidityAlert      | boolean | Over/under desired humidity alert        |
-
-| Telemetry Name | Schema | Description                  |
-| :------------- | :----- | :--------------------------- |
-| temperature    | double | Current measured temperature |
-| humidity       | double | Current measured humidity    |
-
-1. Review the Interface definition for the **Cheese Cave Device Interface**.
-
-    ```json
-    {
-        "@context": "dtmi:dtdl:context;2",
-        "@id": "dtmi:com:contoso:digital_factory:cheese_factory:cheese_cave_device;1",
-        "@type": "Interface",
-        "displayName": "Cheese Cave Device - Interface Model",
-        "contents": [
-            {
-                "@type": "Property",
-                "name": "sensorID",
-                "schema": "string",
-                "description": "Manufacturer Sensor ID",
-                "writable": true
-            },
-            {
-                "@type": ["Property", "Temperature"],
-                "name": "desiredTemperature",
-                "schema": "double",
-                "unit": "degreeFahrenheit",
-                "description": "Cave desired temperature in Fahrenheit",
-                "writable": true
-            },
-            {
-                "@type": "Property",
-                "name": "desiredHumidity",
-                "schema": "double",
-                "description": "Cave desired humidity in percent",
-                "writable": true
-            },
-            {
-                "@type": "Property",
-                "name": "fanAlert",
-                "schema": "boolean",
-                "description": "Fan failure alert",
-                "writable": true
-            },
-            {
-                "@type": "Property",
-                "name": "temperatureAlert",
-                "schema": "boolean",
-                "description": "Over/under desired temperature alert",
-                "writable": true
-            },
-            {
-                "@type": "Property",
-                "name": "humidityAlert",
-                "schema": "boolean",
-                "description": "Over/under desired humidity alert",
-                "writable": true
-            },
-            {
-                "@type": ["Telemetry", "Temperature"],
-                "name": "temperature",
-                "schema": "double",
-                "unit": "degreeFahrenheit",
-                "description": "Current measured temperature",
-            },
-            {
-                "@type": "Telemetry",
-                "name": "humidity",
-                "schema": "double",
-                "description": "Current measured humidity"
-            }
-        ]
-    }
-    ```
-
-    Notice how the property definitions align with the requirements.
-
-    > **NOTE**: The completed model file **CheeseCaveDeviceInterface.json** is available in the **Final\Models** folder associated with this lab.
-
-#### Task 4 - Install DTDL Validator
-
-The **DTDL Editor for Visual Studio Code** extension does a good job of validating the syntax for an individual model, however it cannot validate a hierarchy of models - i.e. ensure that the **target** identified in a Relationship exists. To assist with this challenge, Microsoft has developed a command-line tool - the **DTDL Validator** that can validate a directory tree of DTDL files. This utility makes use of the **Microsoft.Azure.DigitalTwins.Parser** NuGet package to parse and validate the files.
-
-1. To install the **DTDL Validator**, open a browser and navigate to the [DTDL Validator](https://docs.microsoft.com/samples/azure-samples/dtdl-validator/dtdl-validator/) page.
-
-1. To download the source zip, click **Download ZIP**.
-
-1. Unzip the **DTDL_Validator.zip** to a location of your choice.
-
-1. Open a command prompt and navigate to the **{UnZip-Location}\DTDLValidator-Sample\DTDLValidator** folder.
-
-1. To view the command-line options for the **DTDL Validator**, enter the following command:
-
-    ```powershell
-    dotnet run -- --help
-    ```
-
-    The output will be similar to:
-
-    ```cmd
-    DTDLValidator 1.0.0
-    Copyright (C) 2021 DTDLValidator
-
-    -e, --extension      (Default: json) File extension of files to be processed.
-
-    -d, --directory      (Default: .) Directory to search files in.
-
-    -r, --recursive      (Default: true) Search given directory (option -d) only (false) or subdirectories too (true)
-
-    -i, --interactive    (Default: false) Run in interactive mode
-
-    --help               Display this help screen.
-
-    --version            Display version information.
-    ```
-
-#### Task 5 - Validate models with the DTDL Validator
-
-1. To validate the model files in folder and sub-folders, enter the following command:
-
-    ```powershell
-    dotnet run -- --directory {model-location}
-    ```
-
-    Replace the **{model-location}** token with the folder where the models are located - for example, the **Allfiles\Labs\19-Azure Digital Twins\Final\Models** folder.
-
-    Here is a sample output running against models included with this lab:
-
-    ```cmd
-    dotnet run -- --directory "D:\D-Repos\AZ220-DeveloperLabs\Allfiles\Labs\19-Azure Digital Twins\Final\Models"
-    Simple DTDL Validator (dtdl parser library version 3.12.5.0)
-    Validating *.json files in folder 'D:\D-Repos\AZ220-DeveloperLabs\Allfiles\Labs\19-Azure Digital Twins\Final\Models'.
-    Recursive is set to True
-
-    Read 3 files from specified directory
-    Validated JSON for all files - now validating DTDL
-
-    **********************************************
-    ** Validated all files - Your DTDL is valid **
-    **********************************************
-    ```
-
-1. To see an example of the output for a file that has errors, the **Allfiles\Labs\19-Azure Digital Twins\Final\Models** folder contains a file with errors - **CheeseCaveDeviceInterface.json.bad**. To run the **DTDL Validator** tool against this file, the **--extension** argument can be used like so:
-
-    ```powershell
-    dotnet run -- --extension bad --directory "D:\Az220\Allfiles\Labs\19-Azure Digital Twins\Final\Models"
-    ```
-
-    The output for this will identify an error in the JSON:
-
-    ```cmd
-    Simple DTDL Validator (dtdl parser library version 3.12.5.0)
-    Validating *.bad files in folder 'D:\Az220\Allfiles\Labs\19-Azure Digital Twins\Final\Models'.
-    Recursive is set to True
-
-    Read 1 files from specified directory
-    Invalid json found in file D:\Az220\Allfiles\Labs\19-Azure Digital Twins\Final\Models\CheeseCaveDeviceInterface.json.bad.
-    Json parser error
-    The JSON object contains a trailing comma at the end which is not supported in this mode. Change the reader options. LineNumber: 55 | BytePositionInLine: 8.
-
-    Found  1 Json parsing errors
-    ```
-
-1. To correct the error, open the file in Visual Studio Code and remove the additional comma `,` at the end of line 55.
-
-1. Save the file and re-run the command:
-
-    ```powershell
-    dotnet run -- --extension bad --directory "D:\Az220\Allfiles\Labs\19-Azure Digital Twins\Final\Models"
-    ```
-
-    This time, the validator reports an error indicating the **@context** is set to DTDL Version 1.
-
-1. Return to Visual Studio Code and locate the **@context** property and set it to **dtmi:dtdl:context;2**.
-
-1. Save the file and re-run the command:
-
-    ```powershell
-    dotnet run -- --extension bad --directory "D:\Az220\Allfiles\Labs\19-Azure Digital Twins\Final\Models"
-    ```
-
-    This time the validator reports that *Top-level element dtmi:com:contoso:digital_factory:cheese_factory:cheese_cave_device;1 does not have @type of Array, Command, CommandPayload, Component, Enum, EnumValue, Field, Interface, Map, MapKey, MapValue, Object, Property, Relationship, or Telemetry. Provide a @type in the set of allowable types.*
-
-1. Return to Visual Studio Code and locate line 4. Note that instead of **@type**, the property is name **@typo** - correct this.
-
-1. Save the file and re-run the command:
-
-    ```powershell
-    dotnet run -- --extension bad --directory "D:\Az220\Allfiles\Labs\19-Azure Digital Twins\Final\Models"
-    ```
-
-    This time the validator reports 2 errors related to the **desiredTemperature** property - the **schema** is set to **byte** instead of **double**.
-
-As you can see, the **DTDL Validator** can be very useful in identifying problems, however it must be run a number of times to identify all of the issues.
-
-### Exercise 5 - Create a graph of the models
-
-Now the interfaces have been defined for each of the digital twins that will be used in the proof-of-concept, it is time to construct the actual graph of digital twins. The flow for building a graph is straightforward:
+As the interfaces have already been defined for each of the digital twins that will be used in the proof-of-concept, it is time to construct the actual graph of digital twins. The flow for building a graph is straightforward:
 
 * Import the model definitions
 * Create twin instances from the appropriate models
@@ -1064,8 +251,7 @@ There are a number of ways that this flow can be achieved:
 
 As the ADT Explorer includes rich visualization of an ADT graph, it is well suited for building out the simple model for the proof-of-concept. However, larger, more complex, models are also supported and a comprehensive bulk import/export capability helps with iterative design. During this exercise the following tasks will be completed:
 
-* Install ADT Explorer locally
-* Connect it to the ADT instance
+* Access the ADT Explorer (Preview) via the Azure Portal
 * Import the Contoso Cheese models
 * Use the models to create digital twins
 * Add relationships to the graph
@@ -1074,7 +260,7 @@ As the ADT Explorer includes rich visualization of an ADT graph, it is well suit
 
 #### Task 1 - Install ADT Explorer
 
-The **ADT Explorer** is a sample application for the Azure Digital Twins service. The app connects to an Azure Digital Twins instance and provides the following features/capabilities:
+The **ADT Explorer** is a an application for the Azure Digital Twins service. The app connects to an Azure Digital Twins instance and provides the following features/capabilities:
 
 * Upload and explore models
 * Upload and edit graphs of twins
@@ -1082,72 +268,18 @@ The **ADT Explorer** is a sample application for the Azure Digital Twins service
 * Edit properties of twins
 * Run queries against the twins graph
 
-ADT explorer is written as a single-page JavaScript application. You can run it locally as a node.js application - see instructions below.
+The ADT explorer is incorporated into the Azure Portal as a preview feature and is also available as a standalone sample application. In this lab, the version incorporated into the Azure Portal will be used.
 
-1. To verify **node.js** is installed, open a command shell and enter the following command:
+1. Open the [Azure portal](https://portal.azure.com) in new browser window.
 
-    ```powershell
-    node --version
-    ```
+1. In your browser, navigate to the Digital Twins instance **Overview** pane.
 
-    If node is installed, ensure that the version displayed is 10+. If not, [download and install node.js](https://nodejs.org/en/#home-downloadhead).
+1. To open the ADT Explorer in a new browser tab, click **Open Azure Digital Twins Explorer (preview)**.
 
-1. To download the ADT Explorer source code, open a browser and click the following link [Azure Digital Twins (ADT) explorer Release zip](https://github.com/Azure-Samples/digital-twins-explorer/releases/download/235622/Azure_Digital_Twins__ADT__explorer.zip).
+    A new browser tab hosting the ADT Explorer will open. You will see an alert indicating no results have been found - this is expected as no models have been imported.
 
-    The browser will download the **Azure_Digital_Twins__ADT__explorer.zip** file.
+    > **Important**: If you are prompted to login, ensure you use the same account that you used when creating the Azure Digital Twins instance, otherwise you willnot have access to the data plane APIs and will see errors.
 
-1. Extract the files from the **Azure_Digital_Twins__ADT__explorer.zip** to a location of your choice.
-
-1. In a command shell, navigate to the location where the **Azure_Digital_Twins__ADT__explorer.zip** was extracted.
-
-    This folder structure contains documentation as well as folders that contain the application.
-
-1. Navigate to the **client\src** folder.
-
-1. To restore the application dependencies, enter the following command:
-
-    ```powershell
-    npm install
-    ```
-
-    This will take a few moments.
-
-1. In order to access the Azure Digital Twin instance, the user must be logged into Azure using the Azure CLI. To ensure the current user is logged in, enter the following command:
-
-    ```powershell
-    az login
-    ```
-
-    Login via the browser as usual.
-
-1. Open the **adt-connection.txt** file (you saved it after creating the ADT instance earlier in this lab) and get a copy of the ADT URL.
-
-    To connect the **ADT Explorer** to the ADT instance running in Azure, the ADT URL is required. It should be included in the **adt-connection.txt** file. However, if you don't have the file available you use the command line to determine the hostname by entering the following command:
-
-    ```powershell
-    az dt list --query "[].hostName" -o tsv
-    ```
-
-    > **NOTE**: Remember to prefix the **hostname** value with **https://** - e.g.:
-    > ```http
-    > https://adt-az220-training-dm030821.api.eus.digitaltwins.azure.net
-    > ```
-
-1. To launch the application, enter the following command:
-
-    ```powershell
-    npm run start
-    ```
-
-    Once started, a browser page should be opened addressing [http://localhost:3000](http://localhost:3000)
-
-1. In the upper-right corner of the browser page, use the ADT URL icon to open the **Azure Digital Twins URL** dialog.
-
-1. In the **Azure Digital Twins URL** dialog, under **ADT URL**, enter your ADT URL value.
-
-1. Click **Save** to add the information to the browser app local storage and connect to the ADT instance.
-
-    > **NOTE**: You might have to grant consent for the app if a **Permissions requested** pop-up appears.
 
 The **ADT Explorer** sample application is now ready for use. Loading models is your next task, so don't be alarmed if you see an error message telling you that there are no models available.
 
@@ -1166,9 +298,7 @@ The first two options are more appropriate for programmatic scenarios, whereas t
 
 In this task, you will use Azure CLI commands and the ADT Explorer sample app to upload the models included in the **Allfiles\Labs\19-Azure Digital Twins\Final\Models** folder.
 
-1. Open a new command prompt window.
-
-    You will need to leave the ADT-explorer running from the open command line tool.
+1. Open a command prompt window.
 
 1. To ensure that you using correct Azure account credentials, login to Azure using the following command:
 
@@ -1200,21 +330,21 @@ In this task, you will use Azure CLI commands and the ADT Explorer sample app to
     ]
     ```
 
-1. In a browser, return to the **ADT Explorer** at [http://localhost:3000](http://localhost:3000).
+1. Return to the **ADT Explorer**.
 
-    > **TIP**: If the application is already running, refresh the browser to refresh the **MODEL VIEW**.
+    > **TIP**: Click the **Refresh** button in the **MODELS** explorer to update the list of models.
 
     The uploaded **Cheese Factory - Interface Model** should be listed:
 
     ![ADT Explorer MODEL VIEW with Factory Model](media/LAB_AK_19-modelview-factory.png)
 
-1. To import the remaining two models using the **ADT Explorer**, in the **MODEL VIEW**, click the **Upload a Model** icon
+1. To import the remaining two models using the **ADT Explorer**, in the **MODELS** explorer, click the **Upload a Model** icon
 
     ![ADT Explorer MODEL VIEW Upload a Model button](media/LAB_AK_19-modelview-addmodel.png)
 
 1. In the **Open** dialog, navigate to the **Models** folder, select the **CheeseCaveInterface.json** and the **CheeseCaveDeviceInterface.json** files, and then click **Open**.
 
-    The two files will then be uploaded to ADT and the models added. Once complete, the **MODEL VIEW** will update and list all three models.
+    The two files will then be uploaded to ADT and the models added. Once complete, the **MODELS** explorer will update and list all three models.
 
 Now that the models are uploaded, Digital Twins can be created.
 
@@ -1287,19 +417,19 @@ As before, the first two options are more appropriate for programmatic scenarios
 
     The property names match the DTDL Property values declared in the Cheese Factory Interface.
 
-    > **NOTE**: The complex property **GeoLocation** is assigned via a JSON object with **Latitude** and **Longitude** properties. Currently, the **ADT Explorer** cannot initialize these complex properties using the UI.
+    > **NOTE**: The complex property **GeoLocation** is assigned via a JSON object with **Latitude** and **Longitude** properties.
 
-1. In a browser, return to the **ADT Explorer** at [http://localhost:3000](http://localhost:3000).
+1. In a browser, return to the **ADT Explorer**.
 
 1. To display the digital twins created so far, click **Run Query**.
 
     > **NOTE**: Queries and the Query Language will be discussed shortly.
 
-    After a few moments, the **factory_1** digital twin should be displayed in the **GRAPH VIEW**.
+    After a few moments, the **factory_1** digital twin should be displayed in the **TWIN GRAPH** view.
 
     ![ADT Explorer GRAPH VIEW Factory 1](media/LAB_AK_19-graphview-factory_1.png)
 
-1. To view the digital twin properties, in the **GRAPH VIEW**, click **factory_1**.
+1. To view the digital twin properties, in the **TWIN GRAPH** view, click **factory_1**.
 
     The properties for **factory_1** are displayed in the **Property View** as nodes in a tree view.
 
@@ -1307,13 +437,13 @@ As before, the first two options are more appropriate for programmatic scenarios
 
     Notice that the values are consistent with those in the **FactoryProperties.json** file.
 
-1. To create another digital twin from the Cheese Factory model, in the **MODEL VIEW**, locate the **Cheese Factory** model, and then click **Create a Twin**
+1. To create another digital twin from the Cheese Factory model, in the **MODELS** explorer, locate the **Cheese Factory** model, and then click **Create a Twin**
 
     ![ADT Explorer MODEL VIEW Create a Twin button](media/LAB_AK_19-modelview-createtwin.png)
 
 1. When prompted for the **New Twin Name** enter **factory_2** and then click **Save**.
 
-1. To view the digital twin properties for **factory_2**, in the **GRAPH VIEW**, click **factory_2**.
+1. To view the digital twin properties for **factory_2**, in the **TWIN GRAPH** view, click **factory_2**.
 
     Notice that the **FactoryName** and **GeoLocation** properties are uninitialized.
 
@@ -1321,21 +451,32 @@ As before, the first two options are more appropriate for programmatic scenarios
 
     ![ADT Explorer Property View enter factory name](media/LAB_AK_19-propertyexplorer-factoryname.png)
 
-1. In the Property Explorer pane, to save the update to the property, select the **Patch Twin** icon.
+1. In the **PROPERTIES** Explorer pane, to save the update to the property, select the **Patch Twin** icon.
 
     > **Note**: The Patch Twin icon appears identical to the Save Query icon located to the right of the Run Query button. You don't want the Save Query icon.
 
-    Selecting Patch Twin will result in a JSON Patch being created and sent to update the digital twin. The **Patch Information** will be displayed in a dialog. Notice that as this is the first time the value has been set, the **op** (operation) property is **add**. Subsequent changes to the value would be **replace** operations - to see this, click **Run Query** to refresh the **GRAPH VIEW** before making another update.
+    Selecting Patch Twin will result in a JSON Patch being created and sent to update the digital twin. The **Patch Information** will be displayed in a dialog. Notice that as this is the first time the value has been set, the **op** (operation) property is **add**. Subsequent changes to the value would be **replace** operations - to see this, click **Run Query** to refresh the **TWIN GRAPH** view before making another update.
 
    > **TIP**: To learn more about a JSON Patch document, review the following resources:
    > * [Javascript Object Notation (JSON) Patch](https://tools.ietf.org/html/rfc6902)
    > * [What is JSON Patch?](http://jsonpatch.com/)
 
-1. In the **PROPERTY EXPLORER**, expand the **GeoLocation** node - notice the value is **{empty object}**
+1. In the **PROPERTIES** explorer, examine the **factory_2** **GeoLocation** property - notice the values for **Latitude** and **Longitude** are shown as **Unset**.
 
-    Currently, the **ADT Explorer** is unable to add a complex object to an uninitialized property.
+    > **Info**: Earlier versions of the ADT Explorer did not support editing "sub-properties" via the UI - this feature is a welcome addition.
 
-1. Add the following digital twins by selecting the appropriate model in **MODEL VIEW** and clicking **Add a Twin**:
+1. Update the **Latitude** and **Longitude** values as follows:
+
+    | Property name | Value |
+    | :-- | :-- |
+    | Latitude | 47.64530450740752 |
+    | Longitude | -122.12594819866645 |
+
+1. In the **PROPERTIES** Explorer pane, to save the update to the properties, select the **Patch Twin** icon.
+
+    Notice that the Patch Information is once again displayed.
+
+1. Add the following digital twins by selecting the appropriate model in **MODELS** explorer and clicking **Add a Twin**:
 
     | Model Name                             | Digital Twin Name |
     | :------------------------------------- | :---------------- |
@@ -1378,7 +519,7 @@ Similar to Models and Twins, relationships can be created in multiple ways.
     }
     ```
 
-1. To visualize the relationship, in a browser, return to the **ADT Explorer** at [http://localhost:3000](http://localhost:3000).
+1. To visualize the relationship, in a browser, return to the **ADT Explorer**.
 
 1. To display the updated digital twins, click **Run Query**.
 
@@ -1388,21 +529,15 @@ Similar to Models and Twins, relationships can be created in multiple ways.
 
     If you don't see the relationship, refresh the browser window and then run the query.
 
-1. To add a relationship using the **ADT Explorer**, click **cave_1** and then hold the **Ctrl** key and click **device_1**.
-
-    Both twins should now be selected and the **Add Relationship** button will be enabled.
-
-1. To add a relationship, click the **Add Relationship** button:
-
-    ![ADT Explorer graph view add relationship button](media/LAB_AK_19-graphview-addrelationship.png)
+1. To add a relationship using the **ADT Explorer**, first click **cave_1** to select it, and then **right-click** **device_1**. In the displayed context menu, select **Add relationships**.
 
 1. In the **Create Relationship** dialog, under **Source ID**, confirm that **cave_1** is displayed.
 
 1. Under **Target ID**, confirm that **device_1** is displayed.
 
-1. Under **Relationship**, confirm that **rel_has_devices** is displayed.
+1. Under **Relationship**, select **rel_has_devices**.
 
-    > **NOTE**: Unlike relationships created with the Azure CLI, there is no UI to supply a **$relationshipId** value. Instead, a GUID will be assigned.
+    > **NOTE**: Unlike relationships created with the Azure CLI, there is no equivalent UI to supply a **$relationshipId** value. Instead, a GUID will be assigned.
 
 1. To Create the relationship, click **Save**.
 
@@ -1419,15 +554,17 @@ Similar to Models and Twins, relationships can be created in multiple ways.
 
     ![ADT Explorer graph view with updated graph](media/LAB_AK_19-graphview-updatedgraph.png)
 
-1. To view the layout options for the **GRAPH VIEW**, click the dropdown to the right of the **Run Layout** button.
+1. To view the layout options for the **TWIN GRAPH** view, click the **Choose Layout** button.
 
-    The **GRAPH VIEW** can use different algorithms to layout the graph. The **Klay** layout is selected by default. You can try selecting different layouts to see how the graph is impacted.
+    ![ADT Explorer graph view choose layout](media/LAB_AK_19-twingraph-chooselayout.png)
+
+    The **TWIN GRAPH** view can use different algorithms to layout the graph. The **Klay** layout is selected by default. You can try selecting different layouts to see how the graph is impacted.
 
 #### Task 5 - Deleting models, relationships and Twins
 
 During the design process for modeling with ADT, it is likely that a number of proof-of-concepts will be created, many of which will be deleted. Similar to the other operations on digital twins, there are programmatic approaches (API, SDK, and CLI) to deleting models and twins, and you can also use the **ADT Explorer**.
 
-> **NOTE**: One thing to note is that the delete operations are asynchronous and although, for example, a REST API call or a delete in **ADT Explorer** may appear to complete instantly, it may take few minutes for the operation to complete within the ADT service. Attempting to upload revised models with the same name as recently deleted models may fail unexpectedly until the back-end operations have completed.
+> **NOTE**: One thing to note is that the delete operations are asynchronous and although, for example, a REST API call or a delete in **ADT Explorer** may appear to complete instantly, it may take a few minutes for the operation to complete within the ADT service. Attempting to upload revised models with the same name as recently deleted models may fail unexpectedly until the back-end operations have completed.
 
 1. To delete the **factory_2** digital twin via the CLI, return to your command prompt window, and then enter the following command:
 
@@ -1480,11 +617,11 @@ During the design process for modeling with ADT, it is likely that a number of p
 
     > **IMPORTANT**: This command deleted the factory model and succeeded, even though a digital twin **factory_1** still exists. Digital twins that were created using the deleted model can still be found by querying the graph, however, properties of the twin can no longer be updated without the model. Be very careful when completing model management tasks (versioning, deleting, etc.) to avoid creating inconsistent graphs.
 
-1. To display the recent changes to the digital twins, return to the **ADT Explorer** at [http://localhost:3000](http://localhost:3000).
+1. To display the recent changes to the digital twins, return to the **ADT Explorer**.
 
 1. To update the display, refresh the browser page and then click **Run Query**.
 
-    The **Cheese Factory** model should be missing from the **MODEL VIEW** and there should be no relationship between **factory_1** and **cave_1** in the **GRAPH VIEW**.
+    The **Cheese Factory** model should be missing from the **MODELS** explorer and there should be no relationship between **factory_1** and **cave_1** in the **TWIN GRAPH** view.
 
 1. To select the relationship between **cave_1** and **device_1**, click the line between the two twins.
 
@@ -1492,21 +629,13 @@ During the design process for modeling with ADT, it is likely that a number of p
 
     ![ADT Explorer graph view delete relationship](media/LAB_AK_19-graphview-deleterel.png)
 
-1. To delete the relationship, click **Delete Relationship**, and confirm by clicking **Delete**.
+1. To delete the relationship, right-lick the line and select **Delete relationship(s)** from the context menu, and confirm by clicking **Delete**.
 
     The relationship will be deleted and the graph will update.
 
-1. To select the **device_1** digital twin for deletion, click **device_1**.
+1. To delete the **device_1** digital twin, right-click **device_1**, and select **Delete twin(s)** from the context menu.
 
-    The **Delete Selected Twins** button will be enabled.
-
-    ![ADT Explorer graph view delete twin](media/LAB_AK_19-graphview-deletetwin.png)
-
-    > **NOTE**: By using **CTRL**, multiple twins can be selected and deleted.
-
-1. To delete **device_1**, click **Delete Selected Twins**, and confirm by clicking **Delete**.
-
-    The twin will be deleted and the graph will update.
+    > **NOTE**: By using **CTRL** and left-click, multiple twins can be selected. To delete them, right-click the final twin and select **Delete twin(s)** from the context menu.
 
 1. In the upper-right corner of the ADT Explorer page, to delete all of the digital twins in a graph, click **Delete All Twins**, and confirm by clicking **Delete**.
 
@@ -1514,11 +643,9 @@ During the design process for modeling with ADT, it is likely that a number of p
 
     > **IMPORTANT**: Use with care - there is no undo this capability!
 
-    > **NOTE**: After deleting all of the twins, the **MODEL VIEW** may also appear empty - the models **have not** been deleted. Refresh the browser and the models will re-appear.
+1. To delete the **Cheese Cave Device** model from the **MODELS** explorer, click the associated **Delete Model** button, and confirm by clicking **Delete**.
 
-1. To delete the **Cheese Cave Device** model from the **MODEL VIEW**, click the associated **Delete Model** button, and confirm by clicking **Delete**.
-
-1. To delete all models, click **Delete All Models** at the top of the **MODEL VIEW**.
+1. To delete all models, click **Delete All Models** at the top of the **MODELS** explorer.
 
     > **IMPORTANT**: Use with care - there is no undo capability!
 
@@ -1552,9 +679,9 @@ The following table shows the twins and relationships that will be created in th
 
 The spreadsheet **cheese-factory-scenario.xlsx** can be found in the **{file-root}\Allfiles\Labs\19-Azure Digital Twins\Final\Models** folder.
 
-1. In a browser, return to the **ADT Explorer** at [http://localhost:3000](http://localhost:3000).
+1. In a browser, return to the **ADT Explorer**.
 
-1. To import your models using the **ADT Explorer**, in the **MODEL VIEW**, click the **Upload a Model** icon
+1. To import your models using the **ADT Explorer**, in the **MODELS** explorer, click the **Upload a Model** icon
 
 1. In the **Open** dialog, navigate to the **Models** folder, select the **CheeseFactoryInterface.json**, **CheeseCaveInterface.json**, and **CheeseCaveDeviceInterface.json** files, and then click **Open**.
 
@@ -1566,7 +693,7 @@ The spreadsheet **cheese-factory-scenario.xlsx** can be found in the **{file-roo
 
 1. In the **Open** dialog, navigate to the **Models** folder and select the **cheese-factory-scenario.xlsx** file, then click **Open**.
 
-    A preview of the graph to be imported is displayed in an **Import** view:
+    A preview of the graph to be imported is displayed in an **IMPORT** view:
 
     ![ADT Explorer graph view import preview](media/LAB_AK_19-graphview-importpreview.png)
 
@@ -1574,9 +701,7 @@ The spreadsheet **cheese-factory-scenario.xlsx** can be found in the **{file-roo
 
     An **Import Successful** dialog will be displayed, detailing that 7 twins and 6 relationships were imported. Click **Close** to proceed.
 
-    The **Import** pane closes and the **GRAPH VIEW** is displayed,
-
-1. To refresh the **GRAPH VIEW**, click **Run Query**.
+1. Return to the **TWIN GRAPH** view, and click **Run Query**.
 
     The imported graph should now be displayed. You can click on each twin to view the properties (each twin has been initialized with values).
 
@@ -1604,9 +729,9 @@ The spreadsheet **cheese-factory-scenario.xlsx** can be found in the **{file-roo
 
 This twin graph will be used as the basis for the exercise on querying.
 
-### Exercise 6 - Query the graph using ADT Explorer
+### Exercise 4 - Query the graph using ADT Explorer
 
->**NOTE**: This exercise requires the graph imported in Exercise 5.
+>**NOTE**: This exercise requires the graph imported in the previous exercise.
 
 Now let's review the digital twin graph query language.
 
@@ -1620,7 +745,7 @@ Queries can be made through the Digital Twins REST API and with the SDKs. In thi
 
 In this task, the ADT Explorer will be used to execute graph queries and render the results as a graph. Twins can be queried by properties, model type and by relationships. Queries can be combined into compound queries using combination operators that can query for more than one type of twin descriptor at a a time.
 
-1. In a browser, return to the **ADT Explorer** at [http://localhost:3000](http://localhost:3000).
+1. In a browser, return to the **ADT Explorer**.
 
 1. Ensure the **QUERY EXPLORER** query is set to the following:
 
@@ -1698,20 +823,17 @@ In this task, the ADT Explorer will be used to execute graph queries and render 
 
 #### Task 2 - Query for properties using the ADT Explorer
 
-A key limitation of the **ADT Explorer** is is that it is designed to render a graph and the primary display cannot the results for queries that return just properties. In this task, you will learn how it is possible to see the results of such queries without resorting to coding solutions.
+A key limitation of the **ADT Explorer** is is that it is designed to render a graph and the primary display cannot show the results for queries that return just properties. In this task, you will learn how it is possible to see the results of such queries without resorting to coding solutions.
 
-1. To run a valid query that returns just a property, enter the following query:
+1. To run a valid query that returns just a property, enter the following query and click **Run Query**:
 
     ```sql
     SELECT Parent.desiredTemperature FROM digitaltwins Parent
     JOIN Child RELATED Parent.rel_has_devices
     WHERE Child.$dtId = 'sensor-th-0055'
-    AND IS_PRIMITIVE(Parent.desiredTemperature)
     ```
 
     Despite the fact that the query will run without error, no graph is displayed. However, there is a way to view the results in **ADT Explorer**, and you will open the **Output** pane to view the query results in the next task.
-
-    > **IMPORTANT**: Notice the use of the **IS_PRIMITIVE** function in the query above. Complex properties are not supported in ADT queries (an example of a complex property would be the **GeoLocation** property on the **Cheese Factory**). To ensure that projection properties are valid, ADT queries require the inclusion of an IS_PRIMITIVE check. In this case, the `IS_PRIMITIVE(Parent.desiredTemperature)` function returns true and confirms that the **Parent.desiredTemperature** property is a primitive. Omitting this check will result in a an error and a failed query.
 
 1. To open the **Output** pane, click the **Settings** icon at the top-right of the page.
 
@@ -1748,7 +870,7 @@ A key limitation of the **ADT Explorer** is is that it is designed to render a g
 
 ### Exercise 7 - Configure and launch device simulator
 
-In the preceding exercises, the digital twin model and graph for the proof-of-concept were created. In order to demonstrate how to route device message traffic from IoT Hub to ADT, it is useful to use a device simulator. In this exercise, you will be configuring the simulated device app that was developed during LAB 15 to send telemetry to your IoT Hub.
+In the preceding exercises, the digital twin model and graph for the proof-of-concept were created. In order to demonstrate how to route device message traffic from IoT Hub to ADT, it is useful to use a device simulator. In this exercise, you will be configuring a simulated device app to send telemetry to your IoT Hub.
 
 #### Task 1: Open the device simulator project
 
@@ -3178,7 +2300,7 @@ Ensure that the **CheeseCaveDevice** simulator is running and that the **TwinUpd
     2021-03-26T16:42:48.176 [Information] Executed 'UpdateTwinFunction' (Succeeded, Id=03e26a1d-e2df-477c-ac49-0039d87450ad, Duration=1ms)
     ```
 
-1. In a browser, return to the **ADT Explorer** at [http://localhost:3000](http://localhost:3000).
+1. In a browser, return to the **ADT Explorer**.
 
 1. Ensure the **QUERY EXPLORER** query is set to the following:
 
@@ -3188,7 +2310,7 @@ Ensure that the **CheeseCaveDevice** simulator is running and that the **TwinUpd
 
 1. To run this query, click **Run Query**.
 
-1. Select the **cave_1** device and review the properties in the **PROPERTY EXPLORER**.
+1. Select the **cave_1** device and review the properties in the **PROPERTIES** explorer.
 
     When the **cave_1** twin was initialized, the **temperatureAlert** and **humidityAlert** were set to false. After a number of updates have been applied, the **temperatureAlert** and **humidityAlert** properties will now be set to true.
 

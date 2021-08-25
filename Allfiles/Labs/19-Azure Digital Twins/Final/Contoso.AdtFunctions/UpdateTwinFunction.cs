@@ -31,7 +31,7 @@ namespace Contoso.AdtFunctions
 
 
         [FunctionName("UpdateTwinFunction")]
-        public async static void Run([EventGridTrigger] EventGridEvent eventGridEvent, ILogger log)
+        public async static Task Run([EventGridTrigger] EventGridEvent eventGridEvent, ILogger log)
         {
             if (adtInstanceUrl == null)
             {
