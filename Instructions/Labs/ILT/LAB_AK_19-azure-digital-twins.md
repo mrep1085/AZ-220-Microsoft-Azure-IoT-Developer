@@ -868,7 +868,7 @@ A key limitation of the **ADT Explorer** is is that it is designed to render a g
 
     Along with additional result metadata, notice that the **value** property contains the selected **desiredTemperature** property and value.
 
-### Exercise 7 - Configure and launch device simulator
+### Exercise 5 - Configure and launch device simulator
 
 In the preceding exercises, the digital twin model and graph for the proof-of-concept were created. In order to demonstrate how to route device message traffic from IoT Hub to ADT, it is useful to use a device simulator. In this exercise, you will be configuring a simulated device app to send telemetry to your IoT Hub.
 
@@ -888,13 +888,13 @@ In this task, the Cheese Cave Device simulator app will be opened in Visual Stud
         * Labs
             * 19-Azure Digital Twins
                 * Starter
-                    * cheesecavedevice
+                    * CheeseCaveDevice
 
-1. Click **cheesecavedevice**, and then click **Select Folder**.
+1. Click **CheeseCaveDevice**, and then click **Select Folder**.
 
     You should see the following files listed in the EXPLORER pane of Visual Studio Code:
 
-    * cheesecavedevice.csproj
+    * CheeseCaveDevice.csproj
     * Program.cs
 
 1. To open the code file, click **Program.cs**.
@@ -976,7 +976,7 @@ In this task, the configured simulator app is launched and the the successful tr
 
     You need to be sending telemetry to IoT Hub later in this lab.
 
-### Exercise 8 - Set up Azure Function to ingest data
+### Exercise 6 - Set up Azure Function to ingest data
 
 A key part of the proof-of-concept is to demonstrate how data from a device can be delivered to Azure Digital Twins. Data can be ingested into Azure Digital Twins through external compute resources such as Virtual Machines, Azure Functions, and Logic Apps. In this exercise, a function app will be invoked by an IoT Hub's built-in Event Grid. The function app receives the data and uses the Azure Digital Twins APIs to set properties on the appropriate digital twin instance.
 
@@ -993,7 +993,7 @@ The function app context also provides an environment for managing app settings 
 1. At the Cloud Shell command prompt, to create an Azure Function App, enter the following command:
 
     ```bash
-    az functionapp create --resource-group rg-az220 --consumption-plan-location {your-location} --name func-az220-hub2adt-training-{your-id} --storage-account staz220training{your-id} --functions-version 3
+    az functionapp create --resource-group rg-az220 --consumption-plan-location {your-location} --name func-az220-hub2adt-training-{your-id} --storage-account staaz220training{your-id} --functions-version 3
     ```
 
     > **Note**: Remember to replace the **{your-location}** and **{your-id}** tokens above.
@@ -1053,10 +1053,10 @@ In this task, you will use Visual Studio Code to create a local Azure Functions 
 1. Provide the following information at the prompts:
 
    * **Select a language for your function project**: Select **C#**.
-   * If prompted to **Select a .NET runtime**, select **.NET Core 3**.
+   * If prompted to **Select a .NET runtime**, select **.NET Core 3 LTS**.
    * **Select a template for your project's first function**: Select **Change template filter**.
    * **Select a template filter**: Select **All**.
-   * **Select a template for your project's first function**: Select **EventGridTrigger**.
+   * **Select a template for your project's first function**: Select **Azure Event Grid Trigger**.
    * **Provide a function name**: Type **HubToAdtFunction**.
    * **Provide a namespace**: Type **Contoso.AdtFunctions**.
    * **When prompted for a storage account choose**: click **Skip for now**.
@@ -1105,6 +1105,7 @@ In this task you will develop the Azure Function that will be executed whenever 
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
     using System.Text;
+    using System.Threading.Tasks;
 
     namespace Contoso.AdtFunctions
     {
@@ -1131,7 +1132,7 @@ In this task you will develop the Azure Function that will be executed whenever 
 
     ```csharp
     [FunctionName("HubToAdtFunction")]
-    public async static void Run([EventGridTrigger] EventGridEvent eventGridEvent, ILogger log)
+    public async static Task Run([EventGridTrigger] EventGridEvent eventGridEvent, ILogger log)
     {
         // INSERT log statement below here
 
@@ -1296,7 +1297,8 @@ Now that the Azure Function has been written, it must be published to Azure.
 
 1. When prompted, make these selections:
 
-    * **Select subscription**: Select the subscription you are using for this course.
+    * **Sign in to Azure**: If prompted, sign into Azure
+    * **Select subscription**: If prompted, select the subscription you are using for this course.
     * **Select Function App in Azure**: Select **func-az220-hub2adt-training-{your-id}**.
 
     When asked to confirm the deploy, click **Deploy**.
@@ -1311,11 +1313,11 @@ Now that the Azure Function has been written, it must be published to Azure.
 
     The **OUTPUT** pane will now display the log stream for the deployed function - this will timeout after 2 hours. There will be some status information displayed, however there will not be any diagnostic information from the function itself until it is launched. That will be covered in the next exercise.
 
-    The streaming can be stopped or started at any time by rght-clicking the Azure function in Visual Studio Code and select **Start Streaming Logs** or **Stop Streaming Logs**:
+    The streaming can be stopped or started at any time by right-clicking the Azure function in Visual Studio Code and select **Start Streaming Logs** or **Stop Streaming Logs**:
 
     ![Visual Studio Code Azure Function start streaming logs](media/LAB_AK_19-start-function-streaming.png)
 
-### Exercise 9 - Connect IoT Hub to the Azure Function
+### Exercise 7 - Connect IoT Hub to the Azure Function
 
 In this exercise, the IoT Hub created by the setup script will be configured to publish events as they occur to the Azure Function created in the previous exercise. The telemetry from the device simulator created earlier will then be routed to the ADT instance.
 
@@ -1437,892 +1439,9 @@ In this exercise, the IoT Hub created by the setup script will be configured to 
 
     You should be able to see that the **fanAlert**, **temperatureAlert** and **humidityAlert** properties have been updated.
 
-At this point, the data ingestion from device (in this case a device simulator) into ADT has been demonstrated. In the next few exercises, the ADT REST APIs will be explored. However, exercises 12 and 13 will return to the proof-of-concept implementation and demonstrate how parent twins can be updated and telemetry can be streamed to Time Series Insights (TSI).
+At this point, the data ingestion from device (in this case a device simulator) into ADT has been demonstrated. The next exercise will demonstrate how telemetry can be streamed to Time Series Insights (TSI).
 
-### Exercise 10 - Create an app service principal to access ADT APIs
-
-Stepping away from the prototype for a moment, you have been asked to investigate the ADT REST APIs as an alternative means to interact with ADT.
-
-In order to access the ADT REST APIs, it is necessary to authenticate to Azure Active Directory using a service principal with appropriate permissions and roles. The following tasks will walk through the process of creating an app registration and service principal that can be used with REST calls. The service principal will then be granted READ / WRITE access to the ADT APIs and then assigned the **Azure Digital Twins Owner** role.
-
-#### Task 1 - Create an app registration to use with Azure Digital Twins
-
-In circumstances where the authentication strategy requires a **client ID** and **tenant ID** to authenticate, such as using OAuth style authentication via a REST API, then an app registration must be created in Azure Active Directory (AAD). Creating an app registration also creates a service principal that can be used to access ADT.
-
-1. In a browser, navigate to the [Azure Portal](https://portal.azure.com).
-
-1. In the **Search resources, services and docs** field, enter **Azure Active Directory** and click the **Azure Active Directory** search result.
-
-    The **Default Directory Overview** will be displayed.
-
-1. In the left navigation area, under **Manage**, click **App registrations**.
-
-1. To add a new app registration for use with the REST API, click **+ New registration**.
-
-1. Under **Name**, enter **app-az220-rest**.
-
-1. Under **Supported account types**, ensure **Accounts in this organizational directory only (Default Directory only - Single tenant)** is selected.
-
-    > **TIP**: The different account type are:
-    > * **Accounts in this organizational directory only (Default Directory only - Single tenant)** - All user and guest accounts in your directory can use your application or API. Use this option if your target audience is internal to your organization.
-    > * **Accounts in any organizational directory (Any Azure AD directory - Multitenant)** - All users with a work or school account from Microsoft can use your application or API. This includes schools and businesses that use Office 365. Use this option if your target audience is business or educational customers and to enable multitenancy.
-    > * **Accounts in any organizational directory (Any Azure AD directory - Multitenant) and personal Microsoft accounts (e.g. Skype, Xbox)** - All users with a work or school, or personal Microsoft account can use your application or API. It includes schools and businesses that use Office 365 as well as personal accounts that are used to sign in to services like Xbox and Skype. Use this option to target the widest set of Microsoft identities and to enable multitenancy.
-    > * **Personal Microsoft accounts only** - Personal accounts that are used to sign in to services like Xbox and Skype. Use this option to target the widest set of Microsoft identities.
-
-1. Under **Redirect URI**, change the dropdown value to **Public client/native (mobile & desktop)** and enter **http://localhost**.
-
-1. To create the registration, click **Register**.
-
-    Once the registration is complete, the **app-az220-rest** registration detail page is shown.
-
-1. In the text editor of your choice, create a file **appid-details.txt** and record the **Application (client) ID** and the **Directory (tenant) ID**.
-
-    Save the file so you can access the details later.
-
-#### Task 2 - Add the ADT API permission
-
-In order to access the Azure Digital Twin APIs, the app registration must be granted the **Azure Digital Twins** permission.
-
-1. On the **app-az220-rest** registration detail page, in the left navigation area, click **API  permissions**.
-
-1. To start the **Request API permissions** activity, click **+Add a permission**.
-
-1. On the **Request API permissions** page, switch to the **APIs my organization uses** tab and search for **azure digital twins**.
-
-    > **NOTE**: Azure Digital Twins has a specific **Application (client) ID** - `0b07f429-9f4b-4714-9392-cc5e8e80c8b0`. You may see this value referred to in other labs.
-
-1. Select **Azure Digital Twins** from the search results to proceed with assigning permissions for the Azure Digital Twins APIs.
-
-    > **NOTE**:  If your subscription still has an existing Azure Digital Twins instance from the previous public preview of the service (before July 2020), you'll need to search for and select **Azure Smart Spaces Service** instead. This is an older name for the same set of APIs (the Application (client) ID is the same), and your experience won't be changed beyond this step.
-
-1. To select which permissions to grant for these APIs, expand the **Read** permission section (if collapse) and check **Read.Write**.
-
-1. To grant the app registration the reader and writer permission, click **Add permissions**.
-
-    Once completed, the **API permissions** page will be shown and the new permissions will be listed.
-
-1. Review Admin consent settings
-
-    The **Grant admin consent for [company]** action is often required for app registration. Your organization might have **Admin Consent Required** turned on globally in Azure Active Directory (Azure AD) for all app registrations within your subscription. If so, for the app registration to be valid, the owner or administrator must select the button for your company on the API permissions page for that app registration:
-
-    ![Grant admin consent](media/LAB_AK_19-grant-admin-consent.png)
-
-#### Task 3- Add secret-based authentication
-
-In order to use the REST APIs, it is necessary to pass a secret (or password) in the HTTP header. The following steps will create the application secret.
-
-1. On the **app-az220-rest** registration detail page, in the left navigation area, click **Certificates and secrets**.
-
-1. In the **Client secrets** section, click **+New client secret**.
-
-1. In the **Add a client secret** popup, under **Description**, enter **Secret for AZ220 ADT lab**
-
-1. Under **Expires**, select **in 1 year**.
-
-    > **TIP**: Although setting a secret expiration to **Never** may be convenient, organizations often require token expiration as part of their security policies.
-
-1. To create the secret, click **Add**.
-
-    > **IMPORTANT**: It is vital that you complete the next step to make a note of the generated **Value** now (add it to the **appid-details.txt** file you created earlier) - you cannot view the value once you leave this page. The only recourse would be to delete the secret and add a new one.
-
-1. Copy you app secret information (values assigned to Value and ID) into the **appid-details.txt** file that you created earlier.
-
-#### Task 4 - Add Azure Digital Twin Owner role to the App service principal
-
-Finally, the app registration service principal must be granted an ADT role.
-
-1. Open your **adt-az220-training-{your-id}** ADT instance.
-
-    You can use the **Search resources, services and docs** field to navigate to the ADT instance by entering **adt-az220** and then clicking the **adt-az220-training-{your-id}** search result.
-
-1. To update user roles, on the left-side menu, click **Access control (IAM)**.
-
-1. To add a new assignment, click **+ Add** and then click **Add role assignment**.
-
-1. In the **Role** drop-down, select **Azure Digital Twins Data Owner**
-
-1. Ensure the **Assign access to** field value is **User, group or service principal**.
-
-    **Note**: There are many types of security principal that can be chosen including **Function Apps**, **Logic Apps**, **Virtual Machines**, etc.
-
-    A list of available users should be listed - however, the app service principal is not shown.
-
-1. To show the app service principal, in the **Select** field, enter **app-az220-rest**.
-
-    The app registration service principal is now shown.
-
-1. Select **app-az220-rest**, note that it is added to **Selected members**, and click **Save**.
-
-1. To confirm, the role assignment, click **Role assignments** and **app-az220-rest** should be listed beneath the **Azure Digital Twins Owner** role.
-
-### Exercise 11 - Call REST APIs with Postman
-
-In the previous exercise, a service principal was created so that the Azure Digital Twins REST APIs could be explored. As some application architectures don't support the Azure Digital Twins SDK, the Azure Digital Twins REST APIs can be used to perform both control-plane operations (for example, to create Azure Digital Twins instances) and data-plane operations (for example, ingesting telemetry or modifying Azure Digital Twins instance properties).
-
-#### Task 1 - Retrieve authentication token using Postman
-
-In this task, the Postman application is launched and configured for use with the ADT REST APIs. A GET request is created that accesses the global Azure Active Directory authentication service using the details from the service principal created earlier. The service call returns an access token from the Azure AAD authentication endpoint that can the be used in subsequent calls to ADT REST APIs.
-
-1. Launch the **Postman** application
-
-1. If you have an existing **Postman** account, you can sign in with your current account
-
-    **or**
-
-    Sign up for a free account.
-
-1. On the **File** menu, select **New...**.
-
-1. On the **Create New** dialog, click **Request**.
-
-1. Under **Request name**, enter **Retrieve ADT Token**.
-
-1. Under **Select a collection or folder to save to:**, click **+ Create Collection**.
-
-1. In the **Name your collection** field, enter **ADT APIs** and then click the check mark to accept the entry.
-
-1. To save the request to the new collection, click **Save to ADT APIs**.
-
-    The new request will be displayed.
-
-1. Locate the **GET** value in a dropdown, and change it to **POST**.
-
-1. In the **Enter request URL** field, enter **https://login.microsoftonline.com/{tenant-id}/oauth2/v2.0/token**
-
-    This URL is the authentication endpoint for the Azure Active Directory tenant.
-
-    > **NOTE**: Replace the **{tenant-id}** token with the **Directory (tenant) ID** value saved in the **appid-details.txt** file.
-
-1. Under the URL, select the **Headers** tab  and enter the following:
-
-    | Key          | Value                             |
-    | :----------- | :-------------------------------- |
-    | Content-Type | application/x-www-form-urlencoded |
-
-1. To enter the data to be sent, select the **Body** tab.
-
-1. To configure the data entry to key / value pairs, select **x-www-form-urlencoded** tab and enter the following:
-
-    | Key           | Value                                   |
-    | :------------ | :-------------------------------------- |
-    | client_id     | {application-id}                        |
-    | scope         | https://digitaltwins.azure.net/.default |
-    | client_secret | {secret}                                |
-    | grant_type    | client_credentials                      |
-
-    > **NOTE**: Replace the **{application-id}** token with the **Application (client) ID** value, and the **{secret}** token with the **Secret** value saved in the **appid-details.txt** file.
-
-1. To retrieve a token, click **Send**.
-
-    The successful response will include a JSON body similar to:
-
-    ```json
-    {
-        "token_type": "Bearer",
-        "expires_in": 3599,
-        "ext_expires_in": 3599,
-        "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6Im5PbzNaRHJPRFhFSzFqS1doWHNsSFJfS1hFZyIsImtpZCI6Im5PbzNaRHJPRFhFSzFqS1doWHNsSFJfS1hFZyJ9.eyJhdWQiOiJodHRwczovL2RpZ2l0YWx0d2lucy5henVyZS5uZXQiLCJpc3MiOiJodHRwczovL3N0cy53aW5kb3dzLm5ldC83ODFkZTliYS05NWI1LTRlZWMtODg4NC02YWMwNWI5MGNhYmIvIiwiaWF0IjoxNjE1NjY2OTg5LCJuYmYiOjE2MTU2NjY5ODksImV4cCI6MTYxNTY3MDg4OSwiYWlvIjoiRTJZQWd1VzZuN1k4RUpPWFRuK3UrWmJQL3dNQSIsImFwcGlkIjoiMzY2NGY4Y2UtZjFhMC00MWY4LTg1NjItMmIyZjEwMTg2N2UxIiwiYXBwaWRhY3IiOiIxIiwiaWRwIjoiaHR0cHM6Ly9zdHMud2luZG93cy5uZXQvNzgxZGU5YmEtOTViNS00ZWVjLTg4ODQtNmFjMDViOTBjYWJiLyIsIm9pZCI6IjViNjExY2I4LTkyZjAtNDg3YS05ZGUyLWQ3YjA0NTBhMmY1OSIsInJoIjoiMC5BUWNBdXVrZGVMV1Y3RTZJaEdyQVc1REt1ODc0WkRhZzhmaEJoV0lyTHhBWVotRUhBQUEuIiwic3ViIjoiNWI2MTFjYjgtOTJmMC00ODdhLTlkZTItZDdiMDQ1MGEyZjU5IiwidGlkIjoiNzgxZGU5YmEtOTViNS00ZWVjLTg4ODQtNmFjMDViOTBjYWJiIiwidXRpIjoiYjNRZFVxVm9hVTJfbGtGd2h5SWhBQSIsInZlciI6IjEuMCJ9.b8epFAPh9SBC-8Scm5elgb2JsjS0HP0Q6kTNOd_dbXA5VYBdWw7xbuXF-yb4CRxyzqK1nyedZfDO43vIxzyLsKKSsq4ebfx3ixdnUMKWkhZMOWl8vBcJ7kZ_Xoyj_GMONgVRjL52iplr2FD9qCMK1S4icoPfW_8ceTgwLtWwHYfsfDh65-6nDw-kJ3AqBGCwjdEZTQrej05j1KdfDrR6PY2gFAwVNDQvkQs7WlZ37NOroCDBRixf1xiEZzjYccjGF4-z3R6hJNDXmMroa6bRwzHCT78Mb5OGcVABXCTS4Hh_UF1iXX0aZE-ESqJRvBhSvuzINT6L1-FHgxlaw2Nxfg"
-    }
-    ```
-
-    Notice the **expires_in** value - this value is in seconds and the value supplied indicates the above token will expire in approximately 1 hour.
-
-1. Copy the **access_token** value (the multi-line string between the quotes) returned by **your** request and add to the **appid-details.txt** file.
-
-#### Task 2 - Use REST API to update an ADT property
-
-In this task, the ADT REST API will be used to update a Cheese Cave twin and update the **desiredTemperature** and **desiredHumidity** properties.
-
-1. In the **Postman** application, in the **File** menu, select **New..**.
-
-1. On the **Create New** dialog, click **Request**.
-
-1. Under **Request name**, enter **Update Cave desired properties**.
-
-1. Under **Select a collection or folder to save to:**, ensure **ADT APIs** is selected.
-
-1. To save the new request to your collection, click **Save to ADT APIs**.
-
-    The new request will be displayed.
-
-1. Locate the **GET** value in a dropdown, and change it to **PATCH**.
-
-1. In the **Enter request URL** field, enter **https://{adt-hostname}/digitaltwins/{twin_id}**
-
-    > **NOTE**: Replace the **{twin_id}** token with **cave_2** and the **{adt-hostname}** token with the hostname of your Azure Digital Twin instance. The following Azure CLI command will list the host names of all ADT instances in the current subscription: `az dt list --query "[].hostName"`.
-
-1. Under the URL, select the **Query params** tab and enter the following:
-
-    | Key         | Value      |
-    | :---------- | :--------- |
-    | api-version | 2020-10-31 |
-
-1. Under the URL, select the **Headers** tab and enter the following:
-
-    | Key           | Value              |
-    | :------------ | :----------------- |
-    | Content-Type  | application/json   |
-    | Authorization | Bearer {aad_token} |
-
-    > **NOTE**: Replace the **{aad_token}** token with  **access_token** value saved to the **appid-details.txt** file.
-
-    The vales will be similar to:
-
-    ![Postman authorization token](media/LAB_AK_19-postman-auth-token.png)
-
-1. To supply the JSON Patch data, select the **Body** tab.
-
-1. To specify the data format, select **raw** and notice that the format dropdown appears and **JSON** is selected by default.
-
-1. In the body field, enter the following:
-
-    ```json
-    [
-        {
-            "op": "replace",
-            "path": "/desiredTemperature",
-            "value": 75.0
-        },
-        {
-            "op": "replace",
-            "path": "/desiredHumidity",
-            "value": 85.0
-        }
-    ]
-    ```
-
-1. To send the request, click **Send**.
-
-    If the call is successful, an HTTP Status of **204 No Content** will be returned. If, however, an error occurs, a JSON document will be displayed along with an appropriate HTTP Status. For example, if an attempt to update a property that does not exist is made, the following is returned with an HTTP status of **400 Bad Request**:
-
-    ```json
-    {
-        "error": {
-            "code": "JsonPatchInvalid",
-            "message": "DesiredMissingHumidity does not exist on component. Please provide a valid patch document. See section on update apis in the documentation http://aka.ms/adtv2twins."
-        }
-    }
-    ```
-
-#### Task 3 - Use REST API to query ADT
-
-In this task, the ADT REST API will be used to run a simple query.
-
-1. In the **Postman** application, in the **File** menu, select **New...**.
-
-1. On the **Create New** dialog, click **Request**.
-
-1. Under **Request name**, enter **Query ADT**.
-
-1. Under **Select a collection or folder to save to:**, ensure **ADT APIs** is selected.
-
-1. To save the request to the new collection, click **Save to ADT APIs**.
-
-    The new request will be displayed.
-
-1. Locate the **GET** value in a dropdown, and change it to **POST**.
-
-1. In the **Enter request URL** field, enter **https://{adt-hostname}/query**
-
-    > **NOTE**: Replace the **{adt-hostname}** token with the hostname of your Azure Digital Twin instance. The following Azure CLI command will list the host names of all ADT instances in the current subscription: `az dt list --query "[].hostName"`.
-
-1. Under the URL, select the **Query params** tab and enter the following:
-
-    | Key         | Value      |
-    | :---------- | :--------- |
-    | api-version | 2020-10-31 |
-
-1. Under the URL, select the **Headers** tab and enter the following:
-
-    | Key           | Value              |
-    | :------------ | :----------------- |
-    | Content-Type  | application/json   |
-    | Authorization | Bearer {aad_token} |
-
-    > **NOTE**: Replace the **{aad_token}** token with  **access_token** value saved to the **appid-details.txt** file.
-
-    The vales will be similar to:
-
-    ![Postman authorization token](media/LAB_AK_19-postman-auth-token.png)
-
-1. To supply the JSON Patch data, select the **Body** tab.
-
-1. To specify the data format, select **raw** and notice that the format dropdown appears and **JSON** is selected by default.
-
-1. In the body field, enter the following:
-
-    ```json
-    {
-        "query": "SELECT desiredTemperature, desiredHumidity FROM DIGITALTWINS where $dtId = 'cave_2' AND IS_PRIMITIVE(desiredTemperature) AND IS_PRIMITIVE(desiredHumidity)"
-    }
-    ```
-
-    > **NOTE**: At this time, complex properties are not supported. To make sure that projection properties are valid, combine the projections with an **IS_PRIMITIVE** check as shown above.
-
-1. To send the request, click **Send**.
-
-    If the call is successful, an HTTP Status of **200 OK** will be returned with JSON similar to the following:
-
-    ```json
-    {
-        "value": [
-            {
-                "DesiredTemperature": 75,
-                "DesiredHumidity": 85
-            }
-        ],
-        "continuationToken": null
-    }
-    ```
-
-    > **NOTE**: The **continuationToken** is used to retrieve the next set of results from a previous query, if the number of results exceed the limit for a single call. The **continuationToken** key and value would be added to the key / value list in the body of the subsequent query call:
-    > ```json
-    > {
-    >     "query": "SELECT DesiredTemperature, DesiredHumidity FROM DIGITALTWINS where $dtId = 'cave_5' AND IS_PRIMITIVE(DesiredTemperature) AND IS_PRIMITIVE(DesiredHumidity)",
-    >     "continuationToken": "{continuation-token}"
-    > }
-    > ```
-
-### Exercise 12 - Create a route and filter for twin update notification
-
-Returning to the proof-of-concept scenario, it is now time to consider how to update the properties of a Cheese Cave based upon the changes to the properties of a child Cheese Cave Device. In the Cheese Factory scenario, each Cheese Cave Device has a parent Cheese Cave. However, the specific relationship between a Cheese Cave Device twin and the parent Cheese Cave twin is somewhat temporary - while the Cheese Cave twin represents a physical location and is unlikely to change, the Cheese Cave Device twin represents a device that may fail and be replaced. In the case of a failure, the relationship between the failed device and the cave would be deleted and a relationship with the replacement device created.
-
-When considering this relationship, the Contoso business analysts decided that the Cheese Cave twin would be considered the record of the current state of the Cheese Cave and queries should only consider the Cheese Cave twins. Therefore, to ensure that the Cheese Cave twins are up to date, any change to the  property values on a Cheese Cave Device twin should be propagated to the parent Cheese Cave.
-
-As the developer of the proof-of-concept you decided that Digital Twin Change Notifications will be monitored - if a change is made to a Cheese Cave Device, the parent Cheese Cave digital twin will be found and an update made.
-
-There are a number of different events in Azure Digital Twins that produce notifications, which in turn alert the solution backend when the events occur. The event notifications are then routed to different locations inside and outside of Azure Digital Twins where the information can be used to take a desired action.
-
-There are several types of notifications that can be generated, and notification messages may look different depending on which type of event generated the notification.
-
-The chart below shows the different notification types:
-
-| Notification type                             | Routing source name                           | Generated from...                           |
-| :-------------------------------------------- | :-------------------------------------------- | :------------------------------------------ |
-| Digital Twin Change Notification              | Digital Twin Change Notification              | any digital twin property change            |
-| Digital Twin Lifecycle Notification           | Digital Twin Lifecycle Notification           | any digital twin create or delete operation |
-| Digital Twin Relationship Change Notification | Digital Twin Relationship Change Notification | any digital twin relationship change        |
-| Digital Twin Telemetry Messages               | Telemetry Messages                            | any telemetry message                       |
-
-In general, notifications are made up of two parts: the header and the body.
-
-> **NOTE**: More details on notifications can be viewed below:
-> * [Understand event data](https://docs.microsoft.com//azure/digital-twins/how-to-interpret-event-data)
-
-Earlier in this course, an Azure Function was implemented that processed IoT hub device messages for input into Azure Digital Twins. The Azure function performed the following actions:
-
-* Extracted properties from the device message and updated the mapped properties on the device Digital Twin - the fan, temperature and humidity alerts.
-* Published the device temperature and humidity telemetry to ADT
-
-> **NOTE**: Since an update to any digital twin property will raise a Digital Twin Change Notification, it is important to ensure that the function responds to only the intended events.
-
-Here are the actions that will be completed to set up this data flow:
-
-* Create an Event Grid endpoint in Azure Digital Twins that connects the instance to Event Grid
-* Set up a route within Azure Digital Twins to send twin property change events to the endpoint
-* Deploy an Azure Functions app that listens (through Event Grid) to the endpoint, and if the message originates from a Cheese Cave Device, apply updates to the parent Cheese Cave
-* Run the simulated device and query Azure Digital Twins to see the live results
-
-> **TIP**: **Event Grid** vs **Event Hub** - although they sound similar, and both handle events, the two services are used for different purposes. The **Event Grid** is used when your application deals with discrete events, such as a Twin Update. This means the **Event Grids** are used when there is a need for your application to work in a publisher/subscriber model. An **Event Hub**, however, is used when an application deals with a series of events that might occur at massive scale, such as the streaming telemetry from many sensors. In this exercise, an **Event Grid** is appropriate for handling the twin update events. In a later exercise, an **Event Hub** will be used to stream the device telemetry from Azure Digital Twins to Time Series Insights.
-
-#### Task 1 - Create Event Grid Topic
-
-Event Grid is an Azure service that helps you route and deliver events coming from Azure Services to other places within Azure. You can create an event grid topic to collect certain events from a source, and then subscribers can listen on the topic to receive the events as they come through.
-
-1. In a browser, navigate to the [Azure Portal](https://portal.azure.com).
-
-1. On the Azure portal menu, click **+ Create a resource**.
-
-1. In the Search textbox, type **Event Grid Topic**
-
-    The searhc results will update to display the available services matching your search criteria.
-
-1. On the **New** blade, click the **Event Grid Topic** search result.
-
-1. To begin the process of creating the Event Grid Topic, click **Create**.
-
-1. On the **Create Topic** blade, in the **Subscription** dropdown, ensure that the Azure subscription that you intend to use for this course is selected.
-
-1. To the right of **Resource group**, open the dropdown, and then click **rg-az220**
-
-1. In the **Topic Details** section, in the **Name** field, enter **evgt-az220-adtoutput**.
-
-1. In the **Location** dropdown, select a region that is near you.
-
-1. Click **Review + Create**.
-
-1. Verify that the Validation succeeded message is displayed, and then click **Create**.
-
-   Once the resource has been deployed successfully, proceed to the next task.
-
-#### Task 2 - Set up endpoint
-
-In order for Azure Digital Twins to send events, an endpoint must be defined.
-
-1. In the Azure portal, navigate to the Azure Digital Twins instance - **adt-az220-training-{your-id}**.
-
-1. In the left navigation area, under **Connect outputs**, click **Endpoints**.
-
-    A list of existing endpoints is displayed.
-
-1. To add a new endpoint, click **+ Create an endpoint**.
-
-1. In the **Create an endpoint** pane, under **Name**, enter **eventgrid-endpoint**.
-
-1. Under **Endpoint type**, ensure that **Event Grid** is selected.
-
-    > **NOTE**: The value of this selection will change the UI beneath to fields relevant to the selection.
-
-1. Under **Subscription**, ensure that the Azure subscription that you intend to use for this course is selected.
-
-1. Under **Event Grid topic**, open the dropdown and select **evgt-az220-adtoutput** (the Event Grid Topic created earlier).
-
-1. To create the endpoint, click **Save**.
-
-    The **Create an endpoint** pane will close and the list of endpoints will update to include the new endpoint. Notice that the endpoint status is **Provisioning**. Wait a few moments and click **Refresh** to update the list. Repeat until the endpoint status is **Active**.
-
-#### Task 3 - Setup route
-
-For Azure Digital Twins to send events via an endpoint, a route must be created.
-
-1. In the left navigation area, under **Connect outputs**, click **Event routes**.
-
-    A list of existing event routes is displayed.
-
-1. To add a new event route, click **+ Create an event route**.
-
-1. In the **Create an event route** pane, under **Name**, enter **eventgrid-updateeventroute**
-
-1. Under **Endpoint**, select **eventgrid-endpoint**.
-
-1. In the **Add an event route filter** section, leave the **Advanced editor** setting disabled.
-
-    > **NOTE**: Without filtering, endpoints receive a variety of events from Azure Digital Twins:
-    > * Telemetry fired by digital twins using the Azure Digital Twins service API
-    > * Twin property change notifications, fired on property changes for any twin in the Azure Digital Twins instance
-    > * Life-cycle events, fired when twins or relationships are created or deleted
-    >
-    > You can restrict the events being sent by adding a filter for an endpoint to your event route. The **Advanced editor** allows the filter expression to be written as text. To learn more about filters, review the resource below:
-    > * [Filter events](https://docs.microsoft.com/azure/digital-twins/how-to-manage-routes-apis-cli#filter-events)
-
-1. To configure the route such that only Twin update events are sent to the **eventgrid-endpoint**, expand the **Event types** dropdown and select ONLY the **Twin update** option.
-
-    Notice that when the options are changed, the text displayed under **Filter** updates. Enabling the **Advanced editor** would allow this text to be updated directly.
-
-1. To save this route and filter, click **Save**.
-
-    The **Create an event route** pane will close and the list of event routes will update to include the new route. Click **Refresh** to update the list if necessary.
-
-#### Task 4 - Create twin update function
-
-In this task, a new function will be added to the existing **func-az220-hub2adt-training-{your-id}** function app and associated code project. This function will respond to the routed Twin update events from the Cheese Cave Device and update properties on the parent Cheese Cave twin.
-
-> **NOTE**: As the function will be deployed within the existing Function App, it will inherit the service principal that has the rights to access ADT.
-
-1. In Visual Studio Code, open the **Contoso.AdtFunctions** project.
-
-1. To add a new function to the existing project, on the **View** menu, click **Command Palette**, and then enter **Azure Functions: Create Function**
-
-1. Provide the following information at the prompts:
-
-   * **Select a template for your function**: Select **Change template filter**.
-   * **Select a template filter**: Select **All**.
-   * **Select a template for your function**: Select **EventGridTrigger**.
-   * **Provide a function name**: Type **UpdateTwinFunction**.
-   * **Provide a namespace**: Type **Contoso.AdtFunctions**.
-   * **When prompted for a storage account choose**: click **Skip for now**.
-
-    You should see the **UpdateTwinFunction.cs** file added to the project and opened for editing.
-
-1. Replace the `using` statements at the top of the file with the following:
-
-    ```csharp
-    using Azure;
-    using Azure.Core.Pipeline;
-    using Azure.DigitalTwins.Core;
-    using Azure.Identity;
-    using Microsoft.Azure.EventGrid.Models;
-    using Microsoft.Azure.WebJobs;
-    using Microsoft.Azure.WebJobs.Extensions.EventGrid;
-    using Microsoft.Extensions.Logging;
-    using Newtonsoft.Json;
-    using Newtonsoft.Json.Linq;
-    using System;
-    using System.Linq;
-    using System.Net.Http;
-    using System.Threading.Tasks;
-    ```
-
-1. Replace the **UpdateTwinFunction** class definition with the following code:
-
-    ```csharp
-    public static class UpdateTwinFunction
-    {
-        //Your Digital Twins URL is stored in an application setting in Azure Functions.
-        private static readonly string adtInstanceUrl = Environment.GetEnvironmentVariable("ADT_SERVICE_URL");
-        private static readonly HttpClient httpClient = new HttpClient();
-
-        private static string[] mappedProperties = new string[] {
-                                "/fanAlert",
-                                "/humidityAlert",
-                                "/temperatureAlert"
-                            };
-
-        [FunctionName("UpdateTwinFunction")]
-        public async static void Run([EventGridTrigger] EventGridEvent eventGridEvent, ILogger log)
-        {
-            log.LogInformation(eventGridEvent.Data.ToString());
-
-            if (adtInstanceUrl == null)
-            {
-                log.LogError("Application setting \"ADT_SERVICE_URL\" not set");
-                return;
-            }
-
-            try
-            {
-                // INSERT authentication code below here
-                ManagedIdentityCredential cred = new ManagedIdentityCredential("https://digitaltwins.azure.net");
-                DigitalTwinsClient client = new DigitalTwinsClient(new Uri(adtInstanceUrl), cred, new DigitalTwinsClientOptions { Transport = new HttpClientTransport(httpClient) });
-                log.LogInformation($"Azure digital twins service client connection created.");
-
-                // INSERT event processing code below here
-            }
-            catch (Exception e)
-            {
-                log.LogError(e.Message);
-            }
-        }
-    }
-    ```
-
-    This code is virtually identical to that used in the **HubToAdtFunction** created earlier. The **mappedProperties** array is a list of the Cheese Cave Device properties that will be read and applied to matching properties on the parent Cheese Cave.
-
-1. To start processing the Event Grid event, locate the `// INSERT event processing code below here` comment and insert the following code below it:
-
-    ```csharp
-    if (eventGridEvent != null && eventGridEvent.Data != null)
-    {
-        string twinId = eventGridEvent.Subject.ToString();
-        JObject message = (JObject)JsonConvert.DeserializeObject(eventGridEvent.Data.ToString());
-
-        log.LogInformation($"Reading event from {twinId}: {eventGridEvent.EventType}: {message["data"]}");
-
-        if (message["data"]["modelId"] != null && (string)message["data"]["modelId"] == "dtmi:com:contoso:digital_factory:cheese_factory:cheese_cave_device;1")
-        {
-            // INSERT Find the device parent model (the Cheese Cave)
-
-        }
-        else
-        {
-            log.LogInformation($"Source model is not a Cheese Cave Device: {(message["data"]["modelId"] != null ? (string)message["data"]["modelId"] : "null")}");
-        }
-    }
-    ```
-
-    As in the earlier function, after ensuring the **eventGridEvent** has data, the event is processed. Notice that the originating twin ID is present as the subject.
-
-    > **NOTE**: To learn more about the format of a digital twin change notification, review the following resource:
-    >
-    > * [Digital twin change notification](https://docs.microsoft.com/azure/digital-twins/how-to-interpret-event-data#digital-twin-change-notifications)
-
-    The message is then deserialized from the **eventGridEvent** data. Here is an example of the message data JSON:
-
-    ```json
-    {
-        "modelId": "dtmi:com:contoso:digital_factory:cheese_factory:cheese_cave_device;1",
-        "patch": [
-            {
-                "value": false,
-                "path": "/fanAlert",
-                "op": "replace"
-            },
-            {
-                "value": true,
-                "path": "/temperatureAlert",
-                "op": "replace"
-            },
-            {
-                "value": true,
-                "path": "/humidityAlert",
-                "op": "replace"
-            }
-        ]
-    }
-    ```
-
-    As can be seen from the code above, the **modelId** property in the message data identifes the source model. The function checks that the originating model is a Cheese Cave Device before processing the event, otherwise it logs a message indicating that the source was not a Cheese Cave Device.
-
-    > **NOTE**: This is logged as informational, not as an error, as events from other models are expected. Scenarios exist where the function would be enhanced to handle updates from many different models, each resulting in different actions.
-
-1. To find the parent Cheese Cave for the source Cheese Cave Device, locate the `// INSERT Find the device parent model (the Cheese Cave)` comment and insert the following code below it:
-
-    ```csharp
-    AsyncPageable<IncomingRelationship> rels = client.GetIncomingRelationshipsAsync(twinId);
-
-    string parentId = null;
-    await foreach (IncomingRelationship ie in rels)
-    {
-        if (ie.RelationshipName == "rel_has_devices")
-        {
-            parentId = ie.SourceId;
-            break;
-        }
-    }
-
-    if (parentId == null)
-    {
-        log.LogError($"Unable to find parent for {twinId}");
-    }
-    else
-    {
-        // INSERT Update the parent
-    }
-    ```
-
-    To find the parent Cheese Cave, the code retrieves all of the relationships that target the digital twin. The results are actually encapsulated in an **AsyncPageable** collection. This is collection of values that may take multiple service requests to iterate over and dramatically simplifies the consumption of paged asynchronous data calls. In simplified terms, the implementation of **GetIncomingRelationshipsAsync** returns an object that:
-
-    * Asynchronously retrieves the first page of results
-    * Provides an enumerator that can iterate through the page of results and, if the end of a page is reached before the last result, authomatically retrieve the next page. The iteration then continues through the new page, and so on, until the last result is reached.
-
-    > **TIP**: The **AsyncPageable** collection is part of the Azure SDK for .NET and is documented at the resource below:
-    >
-    > * [AsyncPageable<T> Class](https://docs.microsoft.com/dotnet/api/azure.asyncpageable-1?view=azure-dotnet)
-
-    Notice the use of `await foreach (IncomingRelationship ie in rels)` to iterate through the relationships return by **GetIncomingRelationshipsAsync**.
-
-    The code then looks for a relationship that has the desired name - **rel_has_devices**. This must be the name of the relationship defined in the digital twin model. If found, the relationship source ID is the parent ID.
-
-    If no relationship is found, then an error is logged, otherwise the the message is processed to update the parent.
-
-1. To update the parent Cheese Cave, locate the `// INSERT Update the parent` comment and insert the following code below it:
-
-    ```csharp
-    // Read properties which values have been changed in each operation
-    var patch = new Azure.JsonPatchDocument();
-    foreach (var operation in message["data"]["patch"])
-    {
-
-        string opValue = (string)operation["op"];
-        if (opValue.Equals("replace"))
-        {
-            string propertyPath = ((string)operation["path"]);
-
-            if (mappedProperties.Contains(propertyPath))
-            {
-                var value = operation["value"].Value<bool>();
-                patch.AppendReplace<bool>(propertyPath, value);
-                log.LogInformation($"Updating parent {parentId}: {propertyPath} = {value}");
-            }
-        }
-    }
-
-    await client.UpdateDigitalTwinAsync(parentId, patch);
-    ```
-
-    This code creates a new **JsonPatchDocument** and then iterates through each object in the **patch** property of the event data:
-
-    ```json
-    {
-        "modelId": "dtmi:com:contoso:digital_factory:cheese_factory:cheese_cave_device;1",
-        "patch": [
-            {
-                "value": false,
-                "path": "/fanAlert",
-                "op": "replace"
-            },
-            {
-                "value": true,
-                "path": "/temperatureAlert",
-                "op": "replace"
-            },
-            {
-                "value": true,
-                "path": "/humidityAlert",
-                "op": "replace"
-            }
-        ]
-    }
-    ```
-
-    If the object operation is a **replace**, and the **path** (the property) is contained in the **mappedProperties** list declared at the top of the function, then the change to the property is added to the new **JsonPatchDocument**:
-
-    ```csharp
-    private static string[] mappedProperties = new string[] {
-                            "/fanAlert",
-                            "/humidityAlert",
-                            "/temperatureAlert"
-                        };
-    ```
-
-    After all the operations are checked, the digital twin is updated.
-
-#### Task 5 - Deploy the function app to Azure
-
-Now that the function has been written, the whole Function App can be redeployed to Azure.
-
-1. In the Azure Functions extension for Visual Studio Code, select **Deploy to Function App**:
-
-    ![Visual Studio Code deploy to function app](media/LAB_AK_19-deploy-to-function-app.png)
-
-1. When prompted, make these selections:
-
-    * **Select subscription**: Select the subscription you are using for this course.
-    * **Select Function App in Azure**: Select **func-az220-hub2adt-training-{your-id}**.
-
-    When asked to confirm the deploy, click **Deploy**.
-
-    The function will then be compiled and, if successful, deployed. This may take a few moments.
-
-1. Once the deployment has completed, the following prompt will be displayed:
-
-    ![Visual Studio Code deployment complete - select stream logs](media/LAB_AK_19-function-stream-logs.png)
-
-    Click **Stream logs** and in the confirmation dialog to enable application logging, click **Yes**.
-
-    The **OUTPUT** pane will now display the log stream for the deployed function - this will timeout after 2 hours. There will be some status information displayed, however there will not be any diagnostic information from the function itself until it is launched. That will be covered in the next exercise.
-
-    The streaming can be stopped or started at any time by rght-clicking the Azure function in Visual Studio Code and select **Start Streaming Logs** or **Stop Streaming Logs**:
-
-    ![Visual Studio Code Azure Function start streaming logs](media/LAB_AK_19-start-function-streaming.png)
-
-#### Task 6 - Connect the function to Event Grid
-
-The function is deployed, but it still needs to subscribe to the event.
-
-1. In a browser, return to the Azure portal and navigate to the **evgt-az220-adtoutput** Event Grid Topic.
-
-1. On the **Overview** pane, click **+ Event Subscription**.
-
-    The steps to create this event subscription are similar to when you subscribed the first Azure function to IoT Hub earlier in this module. This time, you don't need to specify Device Telemetry as the event type to listen for, and you'll connect to a different Azure function.
-
-1. On the **Create Event Subscription** page, in the **Name** field, enter **twin-updates**.
-
-1. In the **Event schema** field, ensure that **Event Grid Schema** is selected.
-
-1. In the **Topic Details** section, notice that the **Topic Type** and **Source Resource** are pre-populated and read-only.
-
-1. In the **Event Types** section, notice that a filter can be added to restrict the types of events that will be published via this subscription. For this exercise, leave it empty.
-
-    > **NOTE**: By default, all event types for the event source are sent to the endpoint. You can decide to send only certain event types to your endpoint. For example, you can get notified of updates to your resources, but not notified for other operations like deletions. In that case, filter by the **Microsoft.Resources.ResourceWriteSuccess** event type. To learn more about event type filtering, review the following resource:
-    >
-    > * [Understand event filtering for Event Grid subscriptions](https://docs.microsoft.com/azure/event-grid/event-filtering)
-
-1. In the **Endpoint Details** section, for the **Endpoint type**, select **Azure Function**.
-
-1. For the **Endpoint**, click **Select an endpoint**.
-
-1. In the **Select Azure Function** pane, under **Subscription**, ensure that the correct subscription is selected.
-
-1. Under **Resource group**, ensure that  **rg-az220** is selected.
-
-1. Under **Function app**, select **func-az220-hub2adt-training-{your-id}**.
-
-1. Under **Slot**, confirm **Production** is selected.
-
-1. Under **Function**, select **UpdateTwinFunction**.
-
-1. To choose this endpoint, click **Confirm Selection**.
-
-1. On the **Create Event Subscription** pane, in the **ENDPOINT DETAILS** section, verify that the **Endpoint** field now displays **UpdateTwinFunction**.
-
-1. To create the subscription, click **Create**.
-
-Once the subscription has been created, any updates to a digital twin will flow through to the **UpdateTwinFunction**.
-
-#### Task 7 - Run the simulator
-
-In _Exercise 7_ of this lab, the **CheeseCaveDevice** simulator was configured and launched. If this app is still running, jump to the next task - otherwise, return to _Exercise 7_, and complete the tasks and steps to launch the the simulator.
-
-#### Task 8 - Confirm updates applied to cave_1
-
-Ensure that the **CheeseCaveDevice** simulator is running and that the **TwinUpdateFunction** is streaming logs.
-
-1. In the Visual Studio Code instance that is streaming the function logs, review the output of the functions. An example of the output from the **UpdateTwinFunction** is shown below.
-
-    ```log
-    2021-03-26T16:42:47.983 [Information] Executing 'UpdateTwinFunction' (Reason='EventGrid trigger fired at 2021-03-26T16:42:47.9834088+00:00', Id=b3a742e7-c2bd-4e42-af8d-759c416af238)
-    2021-03-26T16:42:47.984 [Information] Azure digital twins service client connection created.
-    2021-03-26T16:42:47.984 [Information] Reading event from sensor-th-0055: Microsoft.DigitalTwins.Twin.Update: {
-        "modelId": "dtmi:com:contoso:digital_factory:cheese_factory:cheese_cave_device;1",
-        "patch": [
-            {
-                "value": false,
-                "path": "/fanAlert",
-                "op": "replace"
-            },
-            {
-                "value": true,
-                "path": "/temperatureAlert",
-                "op": "replace"
-            },
-            {
-                "value": true,
-                "path": "/humidityAlert",
-                "op": "replace"
-            }
-        ]
-    }
-    2021-03-26T16:42:47.984 [Information] Executed 'UpdateTwinFunction' (Succeeded, Id=b3a742e7-c2bd-4e42-af8d-759c416af238, Duration=1ms)
-    2021-03-26T16:42:48.002 [Information] Updating parent cave_1: /fanAlert = False
-    2021-03-26T16:42:48.003 [Information] Updating parent cave_1: /temperatureAlert = True
-    2021-03-26T16:42:48.003 [Information] Updating parent cave_1: /humidityAlert = True
-    ```
-
-    As expected, the twin update notification from **sensor-th-0055** is processed and an update is applied to **cave_1**.
-
-    An example of an ignored update to **cave_1** is shown below:
-
-    ```log
-    2021-03-26T16:42:48.175 [Information] Executing 'UpdateTwinFunction' (Reason='EventGrid trigger fired at 2021-03-26T16:42:48.1754078+00:00', Id=03e26a1d-e2df-477c-ac49-0039d87450ad)
-    2021-03-26T16:42:48.176 [Information] Azure digital twins service client connection created.
-    2021-03-26T16:42:48.176 [Information] Reading event from cave_1: Microsoft.DigitalTwins.Twin.Update: {
-        "modelId": "dtmi:com:contoso:digital_factory:cheese_factory:cheese_cave;1",
-        "patch": [
-            {
-                "value": false,
-                "path": "/fanAlert",
-                "op": "replace"
-            },
-            {
-                "value": true,
-                "path": "/temperatureAlert",
-                "op": "replace"
-            },
-            {
-                "value": true,
-                "path": "/humidityAlert",
-                "op": "replace"
-            }
-        ]
-    }
-    2021-03-26T16:42:48.176 [Information] Source model is not a Cheese Cave Device: dtmi:com:contoso:digital_factory:cheese_factory:cheese_cave;1
-    2021-03-26T16:42:48.176 [Information] Executed 'UpdateTwinFunction' (Succeeded, Id=03e26a1d-e2df-477c-ac49-0039d87450ad, Duration=1ms)
-    ```
-
-1. In a browser, return to the **ADT Explorer**.
-
-1. Ensure the **QUERY EXPLORER** query is set to the following:
-
-    ```sql
-    SELECT * FROM digitaltwins
-    ```
-
-1. To run this query, click **Run Query**.
-
-1. Select the **cave_1** device and review the properties in the **PROPERTIES** explorer.
-
-    When the **cave_1** twin was initialized, the **temperatureAlert** and **humidityAlert** were set to false. After a number of updates have been applied, the **temperatureAlert** and **humidityAlert** properties will now be set to true.
-
-1. To determine the last update time for the properties on the **cave_1** twin, expand the **$metadata** property.
-
-    The **lastUpdateTime** values (displayed in UTC) should indicate the properties have been recently updated.
-
-1. Re-run the query by clicking **Run Query** and verify that the **temperatureAlert** and **humidityAlert** properties **lastUpdateTime** values are changing.
-
-    If the **lastUpdateTime** values are not updating, refresh the browser windows and then re-run the query.
-
-### Exercise 13 - Connect ADT to TSI
+### Exercise 8 - Connect ADT to TSI
 
 In this exercise, you will complete the final part of the proof-of-concept - streaming the device telemetry sent from the Cheese Cave Device sensor-th-0055 via the simulator, through Azure Digital Twins to Time Series Insights.
 
@@ -2394,6 +1513,10 @@ An Event Hubs namespace provides DNS integrated network endpoints and a range of
     > * Ingress: Up to 1 MB per second or 1000 events per second (whichever comes first).
     > * Egress: Up to 2 MB per second or 4096 events per second.
 
+1. Leave **Enable Auto-Inflate** unchecked.
+
+    Auto-Inflate automatically scales the number of Throughput Units assigned to your Standard Tier Event Hubs Namespace when your traffic exceeds the capacity of the Throughput Units assigned to it. You can specify a limit to which the Namespace will automatically scale.
+
 1. To start the validation of the data entered, click **Review + create**.
 
 1. Once validation has succeeded, click **Create**.
@@ -2409,6 +1532,8 @@ This task will create an Event Hub that will subscribe to the twin telemetry eve
 1. On the **Overview** page of the **evhns-az220-training-{your-id}** namespace, click **+ Event Hub**.
 
 1. On the **Create Event Hub** page, under **Name**, enter **evh-az220-adt2func**
+
+    > **Note**: As the event hub is scoped within a globally unique namespace, the event hub name itself need not be globally unique.
 
 1. Under **Partition Count**, leave the value as **1**.
 
@@ -2470,7 +1595,7 @@ Now that the Event Hub is created, it must be added as an endpoint that the ADT 
 
 1. In the left navigation area, under **Connect outputs**, click **Endpoints**.
 
-    A list of endpoints, including the **eventgrid-endpoint** that was created earlier, will be displayed.
+    A list of endpoints, will be displayed.
 
 1. To add a new endpoint, click **+ Create an endpoint**.
 
@@ -2500,7 +1625,7 @@ With the addition of the Event Hub endpoint to the ADT instance, it is now neces
 
 1. In the left navigation area, under **Connect outputs**, click **Event routes**.
 
-    A list of existing routes are displayed, including the **eventgrid-updateeventroute** that was created earlier.
+    A list of existing routes are displayed.
 
 1. To add a new event route, click **+ Create an event route**.
 
@@ -2508,7 +1633,13 @@ With the addition of the Event Hub endpoint to the ADT instance, it is now neces
 
 1. In the **Endpoint** dropdown, select **eventhub-endpoint**.
 
+1. Under **Add a event route filter**, leave **Advanced editor** disabled.
+
+    The advanced editor supports entering a specific filtering expression - for this task, the UI is sufficient.
+
 1. In the **Event types** dropdown, select only **Telemetry**.
+
+    Notice the **Filter** field displays the generated filter expression.
 
 1. To create the event route, click **Save**.
 
@@ -2576,7 +1707,7 @@ In order for an Azure Function to connect to an Event Hub, it must have access t
 
 1. On the **Add/Edit application setting** pane, in the **Name** field, enter **ADT_HUB_CONNECTIONSTRING**
 
-1. In the **Value** field, enter the autrhorization rule connection string value that was saved to the **telemetry-function.txt** file in an earlier task and ends with `EntityPath=evh-az220-adt2func`.
+1. In the **Value** field, enter the authorization rule connection string value that was saved to the **telemetry-function.txt** file in an earlier task and ends with `EntityPath=evh-az220-adt2func`.
 
     The value should be similar to `Endpoint=sb://evhns-az220-training-dm030821.servicebus.windows.net/;SharedAccessKeyName=ADTHubPolicy;SharedAccessKey=fHnhXtgjRGpC+rR0LFfntlsMg3Z/vjI2z9yBb9MRDGc=;EntityPath=evh-az220-adt2func`.
 
@@ -2612,11 +1743,11 @@ In this task, another Azure function will be added to the **func-az220-hub2adt-t
 
    * **Select a template for your function**: Select **Change template filter**.
    * **Select a template filter**: Select **All**.
-   * **Select a template for your function**: Select **EventHubTrigger**.
+   * **Select a template for your function**: Select **Azure Event Hub Trigger**.
    * **Provide a function name**: Type **TelemetryFunction**.
    * **Provide a namespace**: Type **Contoso.AdtFunctions**.
-   * **Select setting from local.settings.json**: Press ENTER.
-   * **Select subscription**: Select the subscription you're using.
+   * **Select setting from local.settings.json**: Press ENTER (i.e. don't select anything).
+   * **Select subscription**: If prompted, select the subscription you're using.
    * **Select an event hub namespace**: Select **evhns-az220-training-{your-id}**.
    * **Select an event hub**: Select **evh-az220-adt2func**.
    * **Select an event hub policy**: Select **ADTHubPolicy**.
@@ -2679,7 +1810,7 @@ In this task, another Azure function will be added to the **func-az220-hub2adt-t
     }
     ```
 
-    Take a momment to look at the **Run** method definition. The **events** parameter makes use of the **EventHubTrigger** attribute - the attribute's constructor takes the name of the event hub, the **optional** name of the consumer group (**$Default** is used if omitted), and the name of an app setting that contains the connection string. This configures the function trigger to respond to an event sent to an event hub event stream. As **events** is defined as an array of EventData, it can be populated with a batch of events.
+    Take a moment to look at the **Run** method definition. The **events** parameter makes use of the **EventHubTrigger** attribute - the attribute's constructor takes the name of the event hub, the **optional** name of the consumer group (**$Default** is used if omitted), and the name of an app setting that contains the connection string. This configures the function trigger to respond to an event sent to an event hub event stream. As **events** is defined as an array of EventData, it can be populated with a batch of events.
 
     > **TIP** To learn more about the **EventHubTrigger**, review the following resource:
     > [Azure Event Hubs trigger for Azure Functions](https://docs.microsoft.com/azure/azure-functions/functions-bindings-event-hubs-trigger?tabs=csharp)
@@ -2762,7 +1893,7 @@ In this task, another Azure function will be added to the **func-az220-hub2adt-t
 
     The **OUTPUT** pane will now display the log stream for the deployed function - this will timeout after 2 hours. There will be some status information displayed, however there will not be any diagnostic information from the function itself until it is launched. That will be covered in the next exercise.
 
-    The streaming can be stopped or started at any time by rght-clicking the Azure function in Visual Studio Code and select **Start Streaming Logs** or **Stop Streaming Logs**:
+    The streaming can be stopped or started at any time by right-clicking the Azure function in Visual Studio Code and select **Start Streaming Logs** or **Stop Streaming Logs**:
 
     ![Visual Studio Code Azure Function start streaming logs](media/LAB_AK_19-start-function-streaming.png)
 
@@ -2790,7 +1921,7 @@ In this task, another Azure function will be added to the **func-az220-hub2adt-t
 
 1. Under **Subscription ID**, select the subscription being used for this course.
 
-1. Under **Event Hub namespace**, select **echns-az220-training-{your-id}**
+1. Under **Event Hub namespace**, select **evhns-az220-training-{your-id}**
 
 1. Under **Event Hub name**, select **evh-az220-func2tsi**.
 
@@ -2802,11 +1933,15 @@ In this task, another Azure function will be added to the **func-az220-hub2adt-t
 
     > **TIP**: As there is only one event reader for the **evh-az220-func2tsi** Event Hub, using the **$Default** consumer group is fine. If more readers were to be added, then it is recommended that one consumer group per reader is used. Consumer groups are created on the Event Hub.
 
+1. Under **Start time**, select **All my data**.
+
+    Notice there are other options available, such as **Beginning now (default)**, that may be more suitable for a production environment.
+
 1. Under **Event serialization format**, notice that the read-only value is **JSON**.
 
 1. Under **Timestamp property name**, leave the value empty.
 
-    > **TIP**: The name of the event property that should be used as the event timestamp. When not specified, event enqueue time within the event source will be used as the event timestamp.
+    > **TIP**: This specifies the name of the event property that should be used as the event timestamp. When not specified, the event enqueue time within the event source will be used as the event timestamp.
 
 1. To create the Event Source, click **Save**.
 
@@ -2830,4 +1965,8 @@ Now, data should be flowing into your Time Series Insights instance, ready to be
 
     ![TSI Explorer showing time series data](media/LAB_AK_19-tsi-explorer-data.png)
 
+    > **Note**: It may take some time for sufficient data to be displayed.
+
 By default, digital twins are stored as a flat hierarchy in Time Series Insights, however they can be enriched with model information and a multi-level hierarchy for organization. You can write custom logic to automatically provide this information using the model and graph data already stored in Azure Digital Twins.
+
+Congratulations - you are now passing device telemtry data to Time Series Insights.
