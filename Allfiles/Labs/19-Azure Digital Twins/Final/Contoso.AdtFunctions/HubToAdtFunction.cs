@@ -12,6 +12,7 @@ using Azure.Core.Pipeline;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Contoso.AdtFunctions
 {
@@ -58,7 +59,7 @@ namespace Contoso.AdtFunctions
 
             try
             {
-                // INSERT authentication code below here
+                // REVIEW authentication code below here
                 // Notice the use of the ManagedIdentityCredential class.
                 // This class attempts authentication using the managed identity
                 // that has been assigned to the deployment environment earlier.
@@ -75,7 +76,7 @@ namespace Contoso.AdtFunctions
                         new DigitalTwinsClientOptions { Transport = new HttpClientTransport(httpClient) });
                 log.LogInformation($"Azure digital twins service client connection created.");
 
-                // INSERT event processing code below here
+                // REVIEW event processing code below here
                 if (eventGridEvent != null && eventGridEvent.Data != null)
                 {
 
@@ -105,7 +106,7 @@ namespace Contoso.AdtFunctions
                     log.LogInformation($"Device:{deviceId} Temperature is:{body["temperature"]}");
                     log.LogInformation($"Device:{deviceId} Humidity is:{body["humidity"]}");
 
-                    // INSERT ADT update code below here
+                    // REVIEW ADT update code below here
                     // There are two approaches being used to apply data to the
                     // digital twin - the first via property updates using a JSON
                     // patch, the second via the publishing of telemetry data.

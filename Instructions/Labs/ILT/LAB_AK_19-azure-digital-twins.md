@@ -43,7 +43,7 @@ In this lab, you will complete the following activities:
 
 ## Lab Instructions
 
-### Exercise 1: Verify Lab Prerequisites
+### Exercise 1 - Verify Lab Prerequisites
 
 #### Task 1 - Create resources
 
@@ -123,11 +123,11 @@ The resources have now been created.
 
     If Azure CLI is not installed, you must install it before you continue.
 
-### Exercise 2 : Create an instance of the Azure Digital Twins resource
+### Exercise 2 - Create an instance of the Azure Digital Twins resource
 
 In this exercise, the Azure portal will be used to create an Azure Digital Twins (ADT) instance. The connection data for Azure Digital Twins will then be stored in a text file for later use. Finally the current user will be assigned a role to allow the ADT resource to be accessed.
 
-#### Task 1: Use the Azure portal to create a resource (Azure Digital Twins)
+#### Task 1 - Use the Azure portal to create a resource (Azure Digital Twins)
 
 1. Open the [Azure portal](https://portal.azure.com) in new browser window.
 
@@ -163,7 +163,7 @@ In this exercise, the Azure portal will be used to create an Azure Digital Twins
 
     You should see the Overview pane for your ADT resource, which includes a body section titled **Get started with Azure Digital Twins**.
 
-#### Task 2: Save the connection data to a reference file
+#### Task 2 - Save the connection data to a reference file
 
 1. Using **Notepad** or a similar text editor, create a file named **adt-connection.txt**.
 
@@ -237,7 +237,7 @@ And the relationships between IDs could be:
 >
 >  The complete models referenced in this exercise are available in this folder location.
 
-As the interfaces have already been defined for each of the digital twins that will be used in the proof-of-concept, it is time to construct the actual graph of digital twins. The flow for building a graph is straightforward:
+Fore the purposes of this exercise, the interfaces have already been defined for each of the digital twins that will be used in the proof-of-concept, it is time to construct the actual graph of digital twins. The flow for building a graph is straightforward:
 
 * Import the model definitions
 * Create twin instances from the appropriate models
@@ -258,7 +258,7 @@ As the ADT Explorer includes rich visualization of an ADT graph, it is well suit
 * Learn how to use delete twins, relationships and models from ADT
 * Bulk import a graph into ADT
 
-#### Task 1 - Install ADT Explorer
+#### Task 1 - Access the ADT Explorer
 
 The **ADT Explorer** is a an application for the Azure Digital Twins service. The app connects to an Azure Digital Twins instance and provides the following features/capabilities:
 
@@ -278,7 +278,7 @@ The ADT explorer is incorporated into the Azure Portal as a preview feature and 
 
     A new browser tab hosting the ADT Explorer will open. You will see an alert indicating no results have been found - this is expected as no models have been imported.
 
-    > **Important**: If you are prompted to login, ensure you use the same account that you used when creating the Azure Digital Twins instance, otherwise you willnot have access to the data plane APIs and will see errors.
+    > **Important**: If you are prompted to login, ensure you use the same account that you used when creating the Azure Digital Twins instance, otherwise you will not have access to the data plane APIs and will see errors.
 
 
 The **ADT Explorer** sample application is now ready for use. Loading models is your next task, so don't be alarmed if you see an error message telling you that there are no models available.
@@ -294,7 +294,7 @@ In order to create Digital Twins in ADT, it is necessary to first upload models.
 
 The first two options are more appropriate for programmatic scenarios, whereas the Azure CLI can be useful in **configuration as code** scenarios or "one-off" requirements. The **ADT Explorer** app provides an intuitive way to interact with ADT.
 
-> **TIP**: What is **configuration as code**? As configuration is written as source code (for example, scripts containing Azure CLI commands), you can use all best development practices to optimise it, such as: creating reusable definitions of model uploads, parameterization, using loops to create lots of different instances of the models and so on. These scripts can then be stored in source code control to ensure they are retained, version controlled, etc.
+> **TIP**: What is **configuration as code**? As configuration is written as source code (for example, scripts containing Azure CLI commands), you can use best development practices to optimise it, such as: creating reusable definitions of model uploads, parameterization, using loops to create multiple instances of the models and so on. These scripts can then be stored in source code control to ensure they are retained, version controlled, etc.
 
 In this task, you will use Azure CLI commands and the ADT Explorer sample app to upload the models included in the **Allfiles\Labs\19-Azure Digital Twins\Final\Models** folder.
 
@@ -976,6 +976,283 @@ In this task, the configured simulator app is launched and the the successful tr
 
     You need to be sending telemetry to IoT Hub later in this lab.
 
+### Exercise 6 -  Set up Azure Function to ingest data
+
+A key part of the proof-of-concept is to demonstrate how data from a device can be delivered to Azure Digital Twins. Data can be ingested into Azure Digital Twins through external compute resources such as Virtual Machines, Azure Functions, and Logic Apps. In this exercise, a function app will be invoked by an IoT Hub's built-in Event Grid. The function app receives the data and uses the Azure Digital Twins APIs to set properties on the appropriate digital twin instance.
+
+#### Task 1 - Create and configure a function app
+
+In order to configure an IoT Hub event grid endpoint to route telemetry to an Azure Function, it is necessary to first create the Azure Function. In this task, an Azure Function App is created that provides the execution context in which individual Azure Functions run.
+
+In order to access Azure Digital Twins and it's APIs, it is necessary to utilize a service principal with the appropriate permissions. During this task,.a service principal is created for the function app and then assigned the appropriate permission. Once the function app has the appropriate permission, any Azure Functions that execute within the function app context will use that service principal and will therefore have permission to access ADT.
+
+The function app context also provides an environment for managing app settings for one or more functions. This capability will be used to define a setting that contains the ADT connection string which can then be read by the Azure Functions. Encapsulating connection strings and other configurations values in app settings is considered a much better practice than hard-coding the values in the function code.
+
+1. Open the browser window containing your Azure portal, and then open the Azure Cloud Shell.
+
+1. At the Cloud Shell command prompt, to create an Azure Function App, enter the following command:
+
+    ```bash
+    az functionapp create --resource-group rg-az220 --consumption-plan-location {your-location} --name func-az220-hub2adt-training-{your-id} --storage-account staaz220training{your-id} --functions-version 3
+    ```
+
+    > **Note**: Remember to replace the **{your-location}** and **{your-id}** tokens above.
+
+    The Azure function requires that a bearer token to be passed to it in order to authenticate with Azure Digital Twins. To make sure that this token is passed, you'll need to create a managed identity for the function app.
+
+1. To create (assign) the system-managed identity for the function app and display the associated principal Id, enter the following command:
+
+    ```bash
+    az functionapp identity assign -g rg-az220 -n func-az220-hub2adt-training-{your-id} --query principalId -o tsv
+    ```
+
+    > **Note**: Remember to replace the **{your-id}** token above.
+
+    The output will be similar to following:
+
+    ```bash
+    1179da2d-cc37-48bb-84b3-544cbb02d194
+    ```
+
+    This is the principal ID that was assigned to the function app - you will need the principal ID in the next step.
+
+1. To assign the **Azure Digital Twins Data Owner** role to the Function App principal, enter the following command:
+
+    ```bash
+    az dt role-assignment create --dt-name adt-az220-training-{your-id} --assignee {principal-id} --role "Azure Digital Twins Data Owner"
+    ```
+
+    > **Note**: Remember to replace the **{your-id}** and **{principal-id}** tokens above. The **{principal-id}** value was displayed as the output of the previous step.
+
+    Now that the principal has been assigned to the Azure Function App, that principal must be assigned the **Azure Digital Twins Data Owner** role so that is can access the Azure Digital Twins instance.
+
+1. In order to supply the Azure Digital Twin instance URL to the Azure Function App as an environment variable, enter the following command:
+
+    ```bash
+    az functionapp config appsettings set -g rg-az220 -n func-az220-hub2adt-training-{your-id} --settings "ADT_SERVICE_URL={adt-url}"
+    ```
+
+    > **Note**: Remember to replace the **{your-id}** and **{adt-url}** tokens above. The **{adt-url}** value was saved to the **adt-connection.txt** file in an earlier task and will be similar to `https://adt-az220-training-dm030821.api.eus.digitaltwins.azure.net`.
+
+    Once complete, the command lists all of the available settings. The Azure Function will now be able to obtain the ADT service URL by reading the **ADT_SERVICE_URL** value.
+
+#### Task 2 - Review Contoso.AdtFunctions Project
+
+In this task you will review the Azure Function that will be executed whenever an event occurs on the associated Event Grid. The event will be processed and the message and telemetry will be routed to ADT.
+
+1. In **Visual Studio Code**, open the **Contoso.AdtFunctions** folder.
+
+1. Open the **Contoso.AdtFunctions.csproj** file.
+
+> **NOTE**: In _Lab 3: Setup the Development Environment_, you cloned the GitHub repository containing lab resources by downloading a ZIP file and extracting the contents locally. The extracted folder structure includes the following folder path:
+>
+> * Allfiles
+>   * Labs
+>       * 19-Azure Digital Twins
+>           * Final
+>               * Contoso.AdtFunctions
+
+    Notice the project references the following NuGet Packages:
+
+    * The **Azure.DigitalTwins.Core** package contains the SDK for the Azure Digital Twins service. This library provides access to the Azure Digital Twins service for managing twins, models, relationships, etc.
+    * The **Microsoft.Azure.WebJobs.Extensions.EventGrid** package provides functionality for receiving Event Grid webhook calls in Azure Functions, allowing you to easily write functions that respond to any event published to Event Grid.
+    * The **Microsoft.Azure.WebJobs.Extensions.EventHubs** package provides functionality for receiving Event Hub webhook calls in Azure Functions, allowing you to easily write functions that respond to any event published to Event Hub.
+    * The **Microsoft.NET.Sdk.Functions** packages includes a build task for building .NET function projects.
+    * The **Azure.identity** package contains the implementation of the Azure SDK Client Library for Azure Identity. The Azure Identity library provides Azure Active Directory token authentication support across the Azure SDK. It provides a set of TokenCredential implementations which can be used to construct Azure SDK clients which support AAD token authentication
+    * The **System.Net.Http** package provides a programming interface for modern HTTP applications, including HTTP client components that allow applications to consume web services over HTTP and HTTP components that can be used by both clients and servers for parsing HTTP headers.
+
+1. In Visual Studio Code, open the **HubToAdtFunction.cs** file.
+
+1. To review the member variables for the function, locate the `// INSERT member variables below here` comment and review the code below it:
+
+    ```csharp
+    //Your Digital Twins URL is stored in an application setting in Azure Functions.
+    private static readonly string adtInstanceUrl = Environment.GetEnvironmentVariable("ADT_SERVICE_URL");
+    private static readonly HttpClient httpClient = new HttpClient();
+    ```
+
+    Notice that the **adtInstanceUrl** variable is assigned the value of the **ADT_SERVICE_URL** environment variable defined earlier in the exercise. The code also follows a best practice of using a single, static, instance of the **HttpClient**.
+
+1. Locate the **Run** method declaration, review the following comments:
+
+    ```csharp
+    [FunctionName("HubToAdtFunction")]
+    public async static Task Run([EventGridTrigger] EventGridEvent eventGridEvent, ILogger log)
+    ```
+
+    Notice the use of the **FunctionName** attribute to mark the **Run** method as the entry point **Run** for **HubToAdtFunction**. The method is also declared `async` as the code to update the Azure Digital Twin runs asynchronously.
+
+    The **eventGridEvent** parameter is assigned the Event Grid event that triggered the function call and the **log** parameter provides access to a logger that can be used for debugging.
+
+    > **TIP**: To learn more about the Azure Event Grid trigger for Azure Functions, review the resource below:
+    > * [Azure Event Grid trigger for Azure Functions](https://docs.microsoft.com/azure/azure-functions/functions-bindings-event-grid-trigger?tabs=csharp%2Cbash)
+
+1. To review how to log informational data, locate the following code:
+
+    ```csharp
+    log.LogInformation(eventGridEvent.Data.ToString());
+    ```
+
+    The **ILogger** interface is defined in the **Microsoft.Extensions.Logging** namespace and aggregates most logging patterns to a single method call. In this case, a log entry is created at the **Information** level - other methods exists for various levels including critical, error. etc. As the Azure Function is running in the cloud, logging is essential during development and production.
+
+    > **TIP:** To learn more about the **Microsoft.Extensions.Logging** capability, review the following resources:
+    > * [Logging in .NET](https://docs.microsoft.com/dotnet/core/extensions/logging?tabs=command-line)
+    > * [Microsoft.Extensions.Logging namespace](https://docs.microsoft.com/dotnet/api/microsoft.extensions.logging?view=dotnet-plat-ext-5.0&viewFallbackFrom=netcore-3.1)
+    > * [ILogger Interface](https://docs.microsoft.com/en-us/dotnet/api/microsoft.extensions.logging.ilogger?view=dotnet-plat-ext-5.0&viewFallbackFrom=netcore-3.1)
+
+1. Locate the following code to understand how the **adtInstanceUrl** variable value is checked:
+
+    ```csharp
+    if (adtInstanceUrl == null)
+    {
+        log.LogError("Application setting \"ADT_SERVICE_URL\" not set");
+        return;
+    }
+    ```
+
+    This code checks if the **adtInstanceUrl** variable has been set - if not, the error is logged and the function exits. This demonstrates the value of logging to capture the fact that the function has been incorrectly configured.
+
+1. To ensure any exceptions are logged, a `try..catch` loop is used:
+
+    ```csharp
+    try
+    {
+        // ... main body of code
+    }
+    catch (Exception e)
+    {
+        log.LogError(e.Message);
+    }
+    ```
+
+    Notice that the exception message is logged.
+
+1. To see how the function app principal is used to authenticate to ADT and create a client instance, locate the `// REVIEW authentication code below here` comment and review the following code:
+
+    ```csharp
+    ManagedIdentityCredential cred = new ManagedIdentityCredential("https://digitaltwins.azure.net");
+    DigitalTwinsClient client = new DigitalTwinsClient(new Uri(adtInstanceUrl), cred, new DigitalTwinsClientOptions { Transport = new HttpClientTransport(httpClient) });
+    log.LogInformation($"Azure digital twins service client connection created.");
+    ```
+
+    Notice the use of the **ManagedIdentityCredential** class. This class attempts authentication using the managed identity that has been assigned to the deployment environment earlier. Once the credential is returned, it is used to construct an instance of the **DigitalTwinsClient**. The client contains methods to retrieve and update digital twin information, like models, components, properties and relationships.
+
+1. To review the code that starts to process the Event Grid event, locate the `// REVIEW event processing code below here` comment and review the following code below it:
+
+    ```csharp
+    if (eventGridEvent != null && eventGridEvent.Data != null)
+    {
+        // Read deviceId and temperature for IoT Hub JSON.
+        JObject deviceMessage = (JObject)JsonConvert.DeserializeObject(eventGridEvent.Data.ToString());
+        string deviceId = (string)deviceMessage["systemProperties"]["iothub-connection-device-id"];
+        var fanAlert = (bool)deviceMessage["properties"]["fanAlert"]; // cast directly to a bool
+        var temperatureAlert = deviceMessage["properties"].SelectToken("temperatureAlert") ?? false; // JToken object
+        var humidityAlert = deviceMessage["properties"].SelectToken("humidityAlert") ?? false; // JToken object
+        log.LogInformation($"Device:{deviceId} fanAlert is:{fanAlert}");
+        log.LogInformation($"Device:{deviceId} temperatureAlert is:{temperatureAlert}");
+        log.LogInformation($"Device:{deviceId} humidityAlert is:{humidityAlert}");
+
+        var bodyJson = Encoding.ASCII.GetString((byte[])deviceMessage["body"]);
+        JObject body = (JObject)JsonConvert.DeserializeObject(bodyJson);
+        log.LogInformation($"Device:{deviceId} Temperature is:{body["temperature"]}");
+        log.LogInformation($"Device:{deviceId} Humidity is:{body["humidity"]}");
+    }
+    ```
+
+    Notice the use of JSON deserialization to access the event data. The event data JSON will be similar to:
+
+    ```JSON
+    {
+        "properties": {
+            "sensorID": "S1",
+            "fanAlert": "false",
+            "temperatureAlert": "true",
+            "humidityAlert": "true"
+        },
+        "systemProperties": {
+            "iothub-connection-device-id": "sensor-th-0055",
+            "iothub-connection-auth-method": "{\"scope\":\"device\",\"type\":\"sas\",\"issuer\":\"iothub\",\"acceptingIpFilterRule\":null}",
+            "iothub-connection-auth-generation-id": "637508617957275763",
+            "iothub-enqueuedtime": "2021-03-11T03:27:21.866Z",
+            "iothub-message-source": "Telemetry"
+        },
+        "body": "eyJ0ZW1wZXJhdHVyZSI6OTMuOTEsImh1bWlkaXR5Ijo5OC4wMn0="
+    }
+    ```
+
+    The message **properties** and **systemProperties** are easily accessible using an indexer approach, however where properties are optional, such as **temperatureAlert** and **humidityAlert**, the use of `SelectToken` and a null-coalescing operation is required to prevent an exception being thrown.
+
+    > **TIP**: To learn more about the null-coalescing operator `??`, review the following content:
+    > * [?? and ??= operators (C# reference)](https://docs.microsoft.com/dotnet/csharp/language-reference/operators/null-coalescing-operator)
+
+    The message **body** contains the telemetry payload and is ASCII encoded JSON. Therefore, it must first be decoded and then deserialized before the telemetry properties can be accessed.
+
+    > **TIP**: To learn more about the event schema, review the following resource:
+    > * [Event schema](https://docs.microsoft.com/azure/azure-functions/functions-bindings-event-grid-trigger?tabs=csharp%2Cbash#event-schema)
+
+1. To inspect the code that updates the ADT twin, locate the `// REVIEW ADT update code below here` comment and review the following code below it:
+
+    ```csharp
+    //Update twin
+    var patch = new Azure.JsonPatchDocument();
+    patch.AppendReplace<bool>("/fanAlert", fanAlert); // already a bool
+    patch.AppendReplace<bool>("/temperatureAlert", temperatureAlert.Value<bool>()); // convert the JToken value to bool
+    patch.AppendReplace<bool>("/humidityAlert", humidityAlert.Value<bool>()); // convert the JToken value to bool
+
+    await client.UpdateDigitalTwinAsync(deviceId, patch);
+
+    // publish telemetry
+    await client.PublishTelemetryAsync(deviceId, null, bodyJson);
+    ```
+
+    There are two approaches being used to apply data to the digital twin - the first via property updates using a JSON patch, the second via the publishing of telemetry data.
+
+    The ADT client utilizes a JSON Patch document to add or update digital twin properties. The JSON Patch defines a JSON document structure for expressing a sequence of operations to apply to a JSON document. The various values are added to the patch as append or replace operations, and the ADT is then updated asynchronously.
+
+   > **TIP**: To learn more about a JSON Patch document, review the following resources:
+   > * [Javascript Object Notation (JSON) Patch](https://tools.ietf.org/html/rfc6902)
+   > * [What is JSON Patch?](http://jsonpatch.com/)
+   > * [JsonPatchDocument Class](https://docs.microsoft.com/dotnet/api/azure.jsonpatchdocument?view=azure-dotnet)
+
+   > **IMPORTANT**: The digital twin instance must have existing values before the `AppendReplace` operation is used.
+
+   Notice that the telemetry data is handled differently than the properties - rather than being used to set digital twin properties, it is instead being published as telemetry events. This mechanism ensures that the telemetry is available to be consumed by any downstream subscribers to the digital twins event route.
+
+   > **NOTE**: The digital twins event route must be defined before publishing a telemetry message, otherwise the message will not be routed for consumption.
+
+The function is ready to be published.
+
+> **NOTE**: The **TelemetryFunction.cs** function will be reviewed in a later task.
+
+#### Task 3 - Publish Functions
+
+1. In the Azure Functions extension for Visual Studio Code, select **Deploy to Function App**:
+
+    ![Visual Studio Code deploy to function app](media/LAB_AK_19-deploy-to-function-app.png)
+
+1. When prompted, make these selections:
+
+    * **Sign in to Azure**: If prompted, sign into Azure
+    * **Select subscription**: If prompted, select the subscription you are using for this course.
+    * **Select Function App in Azure**: Select **func-az220-hub2adt-training-{your-id}**.
+
+    When asked to confirm the deploy, click **Deploy**.
+
+    The function will then be compiled and, if successful, deployed. This may take a few moments.
+
+1. Once the deployment has completed, the following prompt will be displayed:
+
+    ![Visual Studio Code deployment complete - select stream logs](media/LAB_AK_19-function-stream-logs.png)
+
+    Click **Stream logs** and in the confirmation dialog to enable application logging, click **Yes**.
+
+    The **OUTPUT** pane will now display the log stream for the deployed function - this will timeout after 2 hours. There will be some status information displayed, however there will not be any diagnostic information from the function itself until it is launched. That will be covered in the next exercise.
+
+    The streaming can be stopped or started at any time by right-clicking the Azure function in Visual Studio Code and select **Start Streaming Logs** or **Stop Streaming Logs**:
+
+    ![Visual Studio Code Azure Function start streaming logs](media/LAB_AK_19-start-function-streaming.png)
+
+<!--
 ### Exercise 6 - Set up Azure Function to ingest data
 
 A key part of the proof-of-concept is to demonstrate how data from a device can be delivered to Azure Digital Twins. Data can be ingested into Azure Digital Twins through external compute resources such as Virtual Machines, Azure Functions, and Logic Apps. In this exercise, a function app will be invoked by an IoT Hub's built-in Event Grid. The function app receives the data and uses the Azure Digital Twins APIs to set properties on the appropriate digital twin instance.
@@ -1316,6 +1593,7 @@ Now that the Azure Function has been written, it must be published to Azure.
     The streaming can be stopped or started at any time by right-clicking the Azure function in Visual Studio Code and select **Start Streaming Logs** or **Stop Streaming Logs**:
 
     ![Visual Studio Code Azure Function start streaming logs](media/LAB_AK_19-start-function-streaming.png)
+    -->
 
 ### Exercise 7 - Connect IoT Hub to the Azure Function
 
@@ -1719,7 +1997,7 @@ In order for an Azure Function to connect to an Event Hub, it must have access t
 
 1. On the **Add/Edit application setting** pane, in the **Name** field, enter **TSI_HUB_CONNECTIONSTRING**
 
-1. In the **Value** field, enter the autrhorization rule connection string value that was saved to the **telemetry-function.txt** file in an earlier task and ends with `EntityPath=evh-az220-func2tsi`.
+1. In the **Value** field, enter the authorization rule connection string value that was saved to the **telemetry-function.txt** file in an earlier task and ends with `EntityPath=evh-az220-func2tsi`.
 
     The value should be similar to `Endpoint=sb://evhns-az220-training-dm030821.servicebus.windows.net/;SharedAccessKeyName=TSIHubPolicy;SharedAccessKey=x4xItgUG6clhGR9pZe/U6JqrNV+drIfu1rlvYHEdk9I=;EntityPath=evh-az220-func2tsi`
 
@@ -1731,48 +2009,15 @@ In order for an Azure Function to connect to an Event Hub, it must have access t
 
     > **NOTE**: Any change to the application settings will restart the functions.
 
-#### Task 8 - Add a telemetry Azure Function
+#### Task 8 - Review a telemetry Azure Function
 
-In this task, another Azure function will be added to the **func-az220-hub2adt-training-{your-id}** function app. This function will be responsible for mapping the device telemetry messages to an alternate format for TSI. This approach has the advantage of being able to handle changes to the device telemetry format without changing the TSI solution.
+In this task, the second Azure function will be reviewed. This function will be responsible for mapping the device telemetry messages to an alternate format for TSI. This approach has the advantage of being able to handle changes to the device telemetry format without changing the TSI solution.
 
 1. In Visual Studio Code, open the **Contoso.AdtFunctions** project.
 
-1. To add a new function to the existing project, on the View menu, click **Command Palette** and then enter **Azure Functions: Create Function**
+1. Open the **TelemetryFunction.cs** file.
 
-1. Provide the following information at the prompts:
-
-   * **Select a template for your function**: Select **Change template filter**.
-   * **Select a template filter**: Select **All**.
-   * **Select a template for your function**: Select **Azure Event Hub Trigger**.
-   * **Provide a function name**: Type **TelemetryFunction**.
-   * **Provide a namespace**: Type **Contoso.AdtFunctions**.
-   * **Select setting from local.settings.json**: Press ENTER (i.e. don't select anything).
-   * **Select subscription**: If prompted, select the subscription you're using.
-   * **Select an event hub namespace**: Select **evhns-az220-training-{your-id}**.
-   * **Select an event hub**: Select **evh-az220-adt2func**.
-   * **Select an event hub policy**: Select **ADTHubPolicy**.
-   * **When prompted for a storage account**: Select Skip for now.
-
-    You should see the **TelemetryFunction.cs** file added to the project and opened for editing.
-
-    > **TIP**: Double-check that **EventHubTrigger**, not **EventGridTrigger** was chosen.
-
-1. Replace the `using` statements at the top of the file with the following:
-
-    ```csharp
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using System.Threading.Tasks;
-    using Microsoft.Azure.EventHubs;
-    using Microsoft.Azure.WebJobs;
-    using Microsoft.Extensions.Logging;
-    using Newtonsoft.Json;
-    using Newtonsoft.Json.Linq;
-    ```
-
-1. Replace the **TelemetryFunction** class definition with the following code:
+1. Locate the **Run** method definition and review the code.
 
     ```csharp
     public static class TelemetryFunction
@@ -1789,7 +2034,7 @@ In this task, another Azure function will be added to the **func-az220-hub2adt-t
             {
                 try
                 {
-                    // INSERT check telemetry below here
+                    // main processing code here
                 }
                 catch (Exception e)
                 {
@@ -1817,15 +2062,15 @@ In this task, another Azure function will be added to the **func-az220-hub2adt-t
 
     The next parameter, **outputEvents** has the **EventHub** attribute - the attribute's constructor takes the name of the event hub and the name of an app setting that contains the connection string. Adding data to the **outputEvents** variable will publish it to the associated Event Hub.
 
-    As this function is processing a batch of events, a way to handle errors is to create a collection to hold exceptions. The function will then iterate through each event in the batch, catching exceptions and adding them to the collection. At the end of the function, if there are multiple exceptions, an **AggregaeException** is created with the collection, if a single exception is generated, then the single exception is thrown.
+    As this function is processing a batch of events, a way to handle errors is to create a collection to hold exceptions. The function will then iterate through each event in the batch, catching exceptions and adding them to the collection. Skip[ to the end of the method, and you will see that if there are multiple exceptions, an **AggregaeException** is created with the collection, if a single exception is generated, then the single exception is thrown.
 
-1. To add the code that checks to see if the event contains Cheese Cave Device telemetry, locate the `// INSERT check telemetry below here` comment and insert the following code below it:
+1. To review the code that checks to see if the event contains Cheese Cave Device telemetry, locate the `// REVIEW check telemetry below here` comment and review the following code below it:
 
     ```csharp
     if ((string)eventData.Properties["cloudEvents:type"] == "microsoft.iot.telemetry" &&
         (string)eventData.Properties["cloudEvents:dataschema"] == "dtmi:com:contoso:digital_factory:cheese_factory:cheese_cave_device;1")
     {
-        // INSERT TSI Event creation below here
+        // REVIEW TSI Event creation below here
     }
     else
     {
@@ -1839,7 +2084,7 @@ In this task, another Azure function will be added to the **func-az220-hub2adt-t
     > **TIP**: To learn more about the use of `await Task.Yield();` review the following resource:
     > * [Task.Yield Method](https://docs.microsoft.com/dotnet/api/system.threading.tasks.task.yield?view=net-5.0)
 
-1. To add the code that processes the event and creates a message for TSI, locate the `// INSERT TSI Event creation below here` comment and insert the following code below it:
+1. To review the code that processes the event and creates a message for TSI, locate the `// REVIEW TSI Event creation below here` comment and review the following code below it:
 
     ```csharp
     // The event is Cheese Cave Device Telemetry
@@ -1878,7 +2123,7 @@ In this task, another Azure function will be added to the **func-az220-hub2adt-t
 
 1. When prompted, make these selections:
 
-    * **Select subscription**: Select the subscription you are using for this course.
+    * **Select subscription**: If prompted, select the subscription you are using for this course.
     * **Select Function App in Azure**: Select **func-az220-hub2adt-training-{your-id}**.
 
     When asked to confirm the deploy, click **Deploy**.

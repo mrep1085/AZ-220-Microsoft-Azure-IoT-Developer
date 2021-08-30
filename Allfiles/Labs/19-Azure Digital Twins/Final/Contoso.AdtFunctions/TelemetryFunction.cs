@@ -45,7 +45,7 @@ namespace Consoto.AdtFunctions
             {
                 try
                 {
-                    // INSERT check telemetry below here
+                    // REVIEW check telemetry below here
                     // This code checks that the current event is telemetry from
                     // a Cheese Cave Device ADT twin - if not, logs that it isn't
                     // and then forces the method to complete asynchronously -
@@ -53,7 +53,7 @@ namespace Consoto.AdtFunctions
                     if ((string)eventData.Properties["cloudEvents:type"] == "microsoft.iot.telemetry" &&
                         (string)eventData.Properties["cloudEvents:dataschema"] == "dtmi:com:contoso:digital_factory:cheese_factory:cheese_cave_device;1")
                     {
-                        // INSERT TSI Event creation below here
+                        // REVIEW TSI Event creation below here
                         // The event is Cheese Cave Device Telemetry
                         // As the eventData.Body is defined as an ArraySegment,
                         // rather than just an array, the portion of the underlying
