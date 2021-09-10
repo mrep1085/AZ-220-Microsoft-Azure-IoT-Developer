@@ -179,7 +179,7 @@ In this task, you will use an ARM (Azure Resource Manager) Template to provision
 
 1. In the **Region** field, enter the same location you have used earlier.
 
-1. In the **Virtual Machine Name** textbox, enter **vm-az220-training-edge0001-{your-id}**
+1. In the **Virtual Machine Name** textbox, enter **vm-az220-training-gw0001-{your-id}**
 
 1. In the **Device Connection String** field, enter a the connection string value from the previous exercise.
 
