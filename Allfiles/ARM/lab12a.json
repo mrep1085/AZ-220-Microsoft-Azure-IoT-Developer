@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.451.19169",
-      "templateHash": "12841244634154159240"
+      "templateHash": "5154085108042226465"
     }
   },
   "parameters": {
@@ -114,7 +114,7 @@
   "resources": [
     {
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2021-02-01",
       "name": "[variables('publicIPAddressName_var')]",
       "location": "[resourceGroup().location]",
       "properties": {

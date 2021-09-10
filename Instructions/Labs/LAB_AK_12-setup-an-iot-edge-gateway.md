@@ -86,9 +86,7 @@ To ensure these resources are available, complete the following tasks.
 
     Make a note of the outputs for use later:
 
-    * publicFQDN
-    * publicSSH
-    * PublicIP
+    * connectionString
 
 The resources have now been created.
 

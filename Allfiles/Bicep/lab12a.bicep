@@ -69,7 +69,7 @@ var sshRule = [
 ]
 var noRule = []
 
-resource publicIPAddressName 'Microsoft.Network/publicIPAddresses@2015-06-15' = {
+resource publicIPAddressName 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
   name: publicIPAddressName_var
   location: resourceGroup().location
   properties: {
