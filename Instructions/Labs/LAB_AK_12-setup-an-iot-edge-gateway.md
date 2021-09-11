@@ -314,7 +314,7 @@ In this exercise, you will explore the **vm-az220-training-gw0001-{your-id}** Vi
     username@vm-az220-training-gw0001-{your-id}:~$
     ```
 
-1. To determine the Virtual Machines public UP address, enter the following command:
+1. To determine the Virtual Machines public IP address, enter the following command:
 
     ```bash
     nslookup vm-az220-training-gw0001-{your-id}.centralus.cloudapp.azure.com
