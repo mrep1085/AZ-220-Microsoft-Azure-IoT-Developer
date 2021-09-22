@@ -16,9 +16,9 @@ You agree to begin by implementing some simple metrics that can be reviewed with
 
 In this lab, you will implement monitoring to track the number of connected devices, the number of telemetry messages sent, and you will also send connection events to a log. In addition, you will create an alert that is triggered when the number of connected devices drops below one. To test the system, you will connect a single device and stream telemetry, then disconnect the device to generate an alert.
 
-<!-- The following resources will be created:
+The following resources will be created:
 
-![Lab 17 Architecture](media/LAB_AK_17-architecture.png) -->
+![Lab 17 Architecture](media/LAB_AK_17-architecture.png)
 
 ## In This Lab
 
