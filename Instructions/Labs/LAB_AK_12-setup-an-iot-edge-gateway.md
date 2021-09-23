@@ -163,7 +163,7 @@ In this exercise, you will deploy an Ubuntu Server VM.
 
 1. In the search results, under **Services**, click **Virtual machines**.
 
-1. On the **Virtual machines** page, click **+ Add** and select **Virtual machine**.
+1. On the **Virtual machines** page, click **+ Create** and select **Virtual machine**.
 
 1. On the **Create a virtual machine** blade, in the **Subscription** dropdown, ensure that the subscription you are using for this course is selected.
 
@@ -887,7 +887,7 @@ In this exercise, you will configure the connection between a pre-built downstre
 
 1. On the **File** menu, click **Open Folder**.
 
-1. In the **Open Folder** dialog, navigate to the Starter folder for lab 12, click **DownstreamDevice**, and then click **Select Folder**.
+1. In the **Open Folder** dialog, navigate to the **Starter** folder for lab 12, click **DownstreamDevice**, and then click **Select Folder**.
 
     You should see the azure-iot-test-only.root.ca.cert.pem file listed in the EXPLORER pane along with the Program.cs file.
 

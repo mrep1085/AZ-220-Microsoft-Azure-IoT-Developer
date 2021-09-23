@@ -371,12 +371,6 @@ In this task, you will use the Azure portal to create an Event Hubs resource.
 
     This lab does not generate sufficient data to warrant increasing the number of units.
 
-1. At the bottom of the blade, click **Next: Features**.
-
-1. Leave **Enable Availability Zones** unchecked.
-
-    > **Note**:  Checking this option enables enhanced availability by spreading replicas across availability zones within one region at no additional cost - however this capability is not needed for this lab.
-
 1. Leave **Enable Auto-Inflate** unchecked.
 
     > **Note**:  Auto-Inflate automatically scales the number of Throughput Units assigned to your Event Hubs Namespace when your traffic exceeds the capacity of the Throughput Units assigned to it. You can specify a limit to which the Namespace will automatically scale. This feature is not required for this lab.
@@ -510,11 +504,13 @@ With this new IoT Hub route in place, and the telemetry data streaming into the 
 
     The **vibrationeventhubinstance** should already be selected for you.
 
+1. Under **Event Hub Consumer group**, click **Use existing**, and then ensure that **$Default** is selected.
+
+1. Under Authentication mode, ensure that **Connection string** is selected in the dropdown.
+
 1. Under **Event Hub policy name**, click **Use existing**, and then ensure that **RootManageSharedAccessKey** is selected in the dropdown.
 
     > **Note**: The **Event Hub policy key** is populated and read-only.
-
-1. Under **Event Hub Consumer group**, click **Use existing**, and then ensure that **$Default** is selected.
 
 1. Under **Event serialization format**, ensure that **JSON** is selected.
 

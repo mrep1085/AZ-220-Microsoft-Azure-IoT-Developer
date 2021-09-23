@@ -160,7 +160,7 @@ In this exercise, you will:
 
 1. On the Azure portal menu, click **Dashboard**.
 
-1. On the **My Dashboard** page, click **+ New dashboard**
+1. On the **My Dashboard** page, click **+ New dashboard**, click **Blank dashboard**.
 
     You can create a custom dashboard to organize and access your Azure resources for a project. In this case, you will create a custom dashboard for this course.
 
@@ -178,7 +178,7 @@ In this exercise, you will:
 
     This blade displays all of the resource groups that you have created using your Azure subscription(s). If you are just getting started with Azure, you probably don't have any resource groups yet.
 
-1. On the **Resource groups** blade, in the top-left corner area, click **+ Add**
+1. On the **Resource groups** blade, in the top-left corner area, click **+ Create**.
 
     This will open a new blade named Create a resource group.
 

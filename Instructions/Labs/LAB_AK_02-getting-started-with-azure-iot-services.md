@@ -376,23 +376,23 @@ There are several methods that you can use to create an instance of the IoT Hub 
 
     Next, you need to specify information about the Hub and your subscription. The following steps walk you through the settings, explaining each of the fields as you fill them in.
 
-1. Under **Name**, enter a globally unique name for your IoT Hub Device Provisioning Service as follows:
-
-    To provide a globally unique name, enter **dps-az220-training-{your-id}** (remember to replace **{your-id}** with the unique ID you created in Exercise 1).
-
-    For example: **dps-az220-training-cah191216**
-
 1. Under **Subscription**, ensure that the subscription you are using for this course is selected.
 
 1. Under **Resource Group**, open the dropdown, and then click **rg-az220**
 
     You will be grouping the resources that you create for this course together in the same resource group. It's a best practice to group related resources in this way, and will help you to clean up your resources when you no longer need them.
 
-1. Under **Location**, open the drop-down list and select the same region that you selected for your resource group.
+1. Under **Name**, enter a globally unique name for your IoT Hub Device Provisioning Service as follows:
+
+    To provide a globally unique name, enter **dps-az220-training-{your-id}** (remember to replace **{your-id}** with the unique ID you created in Exercise 1).
+
+    For example: **dps-az220-training-cah191216**
+
+1. Under **Region**, open the drop-down list and select the same region that you selected for your resource group.
 
     > **Note**: When picking a datacenter to host your resources, keep in mind that picking a datacenter close to your end users will decrease load/response times. If you are on the other side of the world from your end users, you should not be picking the datacenter nearest you.
 
-1. At the bottom of the blade, click **Create**.
+1. At the bottom of the blade, click **Review + Create**. Once validation passes, click **Create**.
 
     Deployment can take a minute or more to complete. You can open the Azure portal Notification pane to monitor progress.
 

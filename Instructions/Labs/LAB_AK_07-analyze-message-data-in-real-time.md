@@ -664,13 +664,13 @@ This will enable you to verify that your route includes the following settings:
 
 1. Under **IoT Hub**, ensure that your **iot-az220-training-{your-id}** IoT hub is selected.
 
-1. Under **Endpoint**, ensure that **Messaging** is selected.
+1. Under **Consumer group**, ensure that **$Default** is selected.
 
 1. Under **Shared access policy name**, ensure that **iothubowner** is selected.
 
     > **Note**:  The **Shared access policy key** is populated and read-only.
 
-1. Under **Consumer group**, ensure that **$Default** is selected.
+1. Under **Endpoint**, ensure that **Messaging** is selected.
 
 1. Under **Event serialization format**, ensure that **JSON** is selected.
 
@@ -688,21 +688,23 @@ This will enable you to verify that your route includes the following settings:
 
     The **Outputs** pane is displayed.
 
-1. On the **Outputs** pane, click **+ Add**, and then click **Blob storage/Data Lake Storage Gen2**.
+1. On the **Outputs** pane, click **+ Add**, and then click **Blob storage/ADLS Gen2**.
 
-    The **Blob storage/Data Lake Storage Gen2 - New output** pane is displayed.
+    The **Blob storage/ADLS Gen2 - New output** pane is displayed.
 
-1. On the **Blob storage/Data Lake Storage Gen2 - New output** pane, under **Output alias**, enter `vibrationOutput`.
+1. On the **Blob storage/ADLS Gen2 - New output** pane, under **Output alias**, enter `vibrationOutput`.
 
-1. Ensure that **Select storage from your subscriptions** is selected.
+1. Ensure that **Select Blob storage/ADLS Gen2 from your subscriptions** is selected.
 
 1. Under **Subscription**, select the subscription you are using for this lab.
 
 1. Under **Storage account**, click **vibrationstore{your-id}**.
 
-    > **Note**:  The **Storage account key** is automatically populated and read-only.
-
 1. Under **Container**, ensure that **Use existing** is selected and that **vibrationcontainer** is selected from the dropdown list.
+
+1. Under **Authentication mode**, ensure that **Connection string** is selected.
+
+    > **Note**:  The **Storage account key** is automatically populated and read-only.
 
 1. Leave the **Path pattern** blank.
 
@@ -710,17 +712,15 @@ This will enable you to verify that your route includes the following settings:
 
 1. Under **Event serialization format**, ensure that **JSON** is selected.
 
-1. Under **Encoding**, ensure that **UTF-8** is selected.
-
 1. Under **Format**, ensure that **Line separated** is selected.
+
+1. Under **Encoding**, ensure that **UTF-8** is selected.
 
     > **Note**:  This setting stores each record as a JSON object on each line and, taken as a whole, results in a file that is an invalid JSON record. The other option, **Array**, ensures that the entire document is formatted as a JSON array where each record is an item in the array. This allows the entire file to be parsed as valid JSON.
 
 1. Leave **Minimum rows** blank.
 
 1. Under **Maximum time**, leave **Hours** and **Minutes** blank.
-
-1. Under **Authentication mode**, ensure that **Connection string** is selected.
 
 1. To create the output, click **Save**, and then wait for the output to be created.
 

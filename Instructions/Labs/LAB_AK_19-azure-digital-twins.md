@@ -1978,7 +1978,7 @@ In this task, you will use Visual Studio Code to create a local Azure Functions 
    * If prompted to **Select a .NET runtime**, select **.NET Core 3**.
    * **Select a template for your project's first function**: Select **Change template filter**.
    * **Select a template filter**: Select **All**.
-   * **Select a template for your project's first function**: Select **EventGridTrigger**.
+   * **Select a template for your project's first function**: Select **Azure Event Grid trigger**.
    * **Provide a function name**: Type **HubToAdtFunction**.
    * **Provide a namespace**: Type **Contoso.AdtFunctions**.
    * **When prompted for a storage account choose**: click **Skip for now**.
@@ -2439,7 +2439,7 @@ In order to use the REST APIs, it is necessary to pass a secret (or password) in
 
 1. In the **Add a client secret** popup, under **Description**, enter **Secret for AZ220 ADT lab**
 
-1. Under **Expires**, select **in 1 year**.
+1. Under **Expires**, select **in 12 months**.
 
     > **TIP**: Although setting a secret expiration to **Never** may be convenient, organizations often require token expiration as part of their security policies.
 
@@ -2447,7 +2447,7 @@ In order to use the REST APIs, it is necessary to pass a secret (or password) in
 
     > **IMPORTANT**: It is vital that you complete the next step to make a note of the generated **Value** now (add it to the **appid-details.txt** file you created earlier) - you cannot view the value once you leave this page. The only recourse would be to delete the secret and add a new one.
 
-1. Copy you app secret information (values assigned to Value and ID) into the **appid-details.txt** file that you created earlier.
+1. Copy your app secret information (values assigned to Value and ID) into the **appid-details.txt** file that you created earlier.
 
 #### Task 4 - Add Azure Digital Twin Owner role to the App service principal
 
@@ -2573,7 +2573,7 @@ In this task, the ADT REST API will be used to update a Cheese Cave twin and upd
 
     > **NOTE**: Replace the **{twin_id}** token with **cave_2** and the **{adt-hostname}** token with the hostname of your Azure Digital Twin instance. The following Azure CLI command will list the host names of all ADT instances in the current subscription: `az dt list --query "[].hostName"`.
 
-1. Under the URL, select the **Query params** tab and enter the following:
+1. Under the URL, select the **Params** tab and enter the following:
 
     | Key         | Value      |
     | :---------- | :--------- |
@@ -2757,7 +2757,7 @@ Event Grid is an Azure service that helps you route and deliver events coming fr
 
 1. In the Search textbox, type **Event Grid Topic**
 
-    The searhc results will update to display the available services matching your search criteria.
+    The search results will update to display the available services matching your search criteria.
 
 1. On the **New** blade, click the **Event Grid Topic** search result.
 
@@ -2849,7 +2849,7 @@ In this task, a new function will be added to the existing **func-az220-hub2adt-
 
    * **Select a template for your function**: Select **Change template filter**.
    * **Select a template filter**: Select **All**.
-   * **Select a template for your function**: Select **EventGridTrigger**.
+   * **Select a template for your function**: Select **Azure Event Grid trigger**.
    * **Provide a function name**: Type **UpdateTwinFunction**.
    * **Provide a namespace**: Type **Contoso.AdtFunctions**.
    * **When prompted for a storage account choose**: click **Skip for now**.
