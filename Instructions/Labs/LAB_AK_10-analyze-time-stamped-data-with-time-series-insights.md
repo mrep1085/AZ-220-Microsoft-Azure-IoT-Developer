@@ -143,13 +143,9 @@ In this exercise, you will setup Time Series Insights integration with Azure IoT
 
 1. Under the **EVENT SOURCE DETAILS** section, ensure that **Create an event source?** is set to **Yes**.
 
-1. In the **Name** field, enter **iot-az220-training-{your-id}** to specify a unique name for this Event Source.
-
 1. In the **Source type** dropdown, ensure that **IoT Hub** is selected.
 
-1. In the **Select a hub** dropdown, ensure that **Select existing** is selected.
-
-    This will allow you to select an existing IoT Hub that's already been provisioned.
+1. In the **Name** field, enter **iot-az220-training-{your-id}** to specify a unique name for this Event Source.
 
 1. In the **Subscription** dropdown, select the subscription that you are using for this course.
 
@@ -164,6 +160,8 @@ In this exercise, you will setup Time Series Insights integration with Azure IoT
 1. In the **IoT Hub consumer group** box, enter **tsievents** and then click **Add**.
 
     This will add a new _Consumer Group_ to use for this Event Source. The Consumer Group needs to be used exclusively for this Event Source, as there can only be a single active reader from a given Consumer Group at a time.
+
+1. Under the **Start options** section, in the **STart time** dropdown, select **Beginning now (default)**.
 
 1. Under the **TIMESTAMP** section, leave the **Property Name** blank.
 

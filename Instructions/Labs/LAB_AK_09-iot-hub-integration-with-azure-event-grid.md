@@ -112,23 +112,25 @@ In this exercise, you will create a new Azure Logic App that will be triggered v
 
 1. On the **Create a resource** blade, in the **Search services and marketplace** box, enter **logic app**
 
-1. In the search results, click **Logic App (Consumption)**.
+1. In the search results, click **Logic App**.
 
-1. On the **Logic App (Consumption)** blade, click **Create**.
+1. On the **Logic App** blade, click **Create**.
 
 1. On the **Basics** tab, under **Project details**, select the **Subscription** that you are using for this course.
 
 1. In the **Resource group** dropdown, under **Select existing**, click **rg-az220**.
 
-1. Under **Instance details**, in the **Name** field, enter **logic-az220-training-{your-id}**
+1. Under **Instance details**, under **Type** select **Consumption**.
+
+1. In the **Name** field, enter **logic-az220-training-{your-id}**
 
     For example: **logic-az220-training-cp191218**
 
     The name of your Azure Logic App must be globally unique because it is a publicly accessible resource that you must be able to access from any IP connected device.
 
-1. In the **Location** dropdown, select the same Azure region that was used for the resource group.
+1. In the **Region** dropdown, select the same Azure region that was used for the resource group.
 
-1. Leave **Log Analytics** set to **Off**.
+1. Leave **Enable Log Analytics** set to **No**.
 
 1. Click **Review + create**.
 

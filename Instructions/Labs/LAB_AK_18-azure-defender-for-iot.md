@@ -208,15 +208,15 @@ In this task, you will create a Virtual Machine that will represent your IoT dev
     > **Tip**:
     > Azure offers a range of options for managing availability and resiliency for your applications. Architect your solution to use replicated VMs in Availability Zones or Availability Sets to protect your apps and data from datacenter outages and maintenance events. In this lab, we don't required any high-availability features.
 
-1. In the **Image** field, select **Ubuntu Server 18.04 LTS - Gen1** image.
+1. In the **Image** field, select **Ubuntu Server 18.04 LTS - Gen2** image.
 
 1. Leave **Azure Spot instance** field unchecked.
 
 1. To the right of **Size**, click **Change size**.
 
-1. On the **Select a VM size** blade, under **VM Size**, click **Standard_B1ms**, and then click **Select**.
+1. On the **Select a VM size** blade, under **VM Size**, click **Standard_DS1_v2**, and then click **Select**.
 
-    You may need to use the **Clear all filters** link to make this size available in the list.
+    You may need to select the **see all sizes** link to select this size.
 
     > **Note**: Not all VM sizes are available in all regions. If, in a later step, you are unable to select the VM size, try a different region. For example, if **West US** doesn't have the sizes available, try **West US 2**.
 
