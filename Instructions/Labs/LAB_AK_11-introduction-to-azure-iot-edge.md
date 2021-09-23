@@ -173,7 +173,7 @@ In this exercise, you will deploy an Ubuntu Server VM.
 
 1. Leave **Availability options** set to **No infrastructure redundancy required**.
 
-1. In the **Image** field, select **Ubuntu Server 18.04 LTS - Gen1** image.
+1. In the **Image** field, select **Ubuntu Server 18.04 LTS - Gen2** image.
 
 1. Leave **Azure Spot instance** field unchecked.
 
