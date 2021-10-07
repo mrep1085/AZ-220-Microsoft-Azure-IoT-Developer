@@ -181,7 +181,7 @@ In this task, you will use an ARM (Azure Resource Manager) Template to provision
 
 1. In the **Virtual Machine Name** textbox, enter **vm-az220-training-gw0001-{your-id}**
 
-1. In the **Device Connection String** field, enter a the connection string value from the previous exercise.
+1. In the **Device Connection String** field, enter the connection string value from the previous exercise.
 
 1. In the **Virtual Machine Size** field, ensure **Standard_DS1_v2** is entered.
 
@@ -465,10 +465,12 @@ Next, you need to "download" the **MyEdgeDeviceCA** certificate from the **vm-az
 
     ```bash
     mkdir lab12
-    scp -r -p <username>@<FQDN>:/tmp/lab12 .
+    scp -r -p {username}@{FQDN}:/tmp/lab12 .
     ```
 
-    > **Note**: Replace the **<username>** placeholder with the username of the admin user for the VM, and replace the **<FQDN>** placeholder with the fully qualified domain name for the VM. Refer to the command that you used to open the SSH session if needed.
+    >**Important**: The command above has a `space` followed by a period `.` at the end.
+
+    > **Note**: Replace the **{username}** placeholder with the username of the admin user for the VM, and replace the **{FQDN}** placeholder with the fully qualified domain name for the VM. Refer to the command that you used to open the SSH session if needed.
     > `scp -r -p vmadmin@vm-az220-training-edge0001-dm080321.centralus.cloudapp.azure.com:/tmp/lab12 .`
 
 1. Enter the Admin password for the VM when prompted.
