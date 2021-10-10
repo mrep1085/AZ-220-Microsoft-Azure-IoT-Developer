@@ -101,7 +101,7 @@ In this exercise, you will open your IoT Hub in the Azure portal, add a new IoT 
 
 1. On the left-side menu of your IoT Hub blade, under **Explorers**, click **IoT devices**.
 
-1. At the top of the **IoT devices** pane, click **+ New**.
+1. At the top of the **IoT devices** pane, click **Add Device**.
 
 1. In the **Device ID** field, enter **sensor-th-0001**
 
@@ -115,11 +115,9 @@ In this exercise, you will open your IoT Hub in the Azure portal, add a new IoT 
 
     Notice that there are three types of authentication available. In this lab you will leverage the simplest of the three, Symmetric key. X.509 Certificates and their use for authentication will be covered in later labs.
 
-1. Notice that the **Primary key** and **Secondary key** fields are disabled.
-
 1. Under **Auto-generate keys**, ensure the checkbox is selected.
 
-    With **Auto-generate keys** selected, the **Primary key** and **Secondary key** fields are disabled and will be populated once the record is saved. Un-selecting **Auto-generate keys** will enable those fields, allowing for values to be entered directly.
+    With **Auto-generate keys** selected, the **Primary key** and **Secondary key** fields are hidden and will be populated once the record is saved. Un-selecting **Auto-generate keys** will display those fields, allowing for values to be entered directly.
 
 1. Under **Connect this device to an IoT hub**, ensure that **Enable** is selected.
 
