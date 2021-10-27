@@ -594,7 +594,12 @@ In this task, you will build the simulated device app for your Refrigerated Truc
 To make this process as simple as possible, each additional section of code should be appended to the end of the file, in the order listed here.
 
 > **Note**:
-> If you would like to skip this task, and load all of the code into your app, then download and copy all of the contents of Program.cs from [MicrosoftDocs/mslearn-your-first-iot-central-app](https://github.com/MicrosoftDocs/mslearn-your-first-iot-central-app) into the Program.cs file of your project. If you copy this code (and replace the connection and subscription strings) then go straight to the next task, and start testing!
+>  If you would like to skip this task, and load all of the code into your app, then download and copy all of the contents of Program.cs into the Program.cs file of your project. If you copy this code (and replace the connection and subscription strings) then go straight to the next task, and start testing! In Lab 3 of this course, "Setup the Development Environment", you cloned the GitHub repository containing lab resources by downloading a ZIP file and extracting the contents locally. The extracted folder structure includes the following folder path:
+
+    * Allfiles
+      * Labs
+          * 20-Build with IoT Central
+            * Final
 
 1. In the Code Editor pane, to add the required `using` statements, enter the following code:
 
