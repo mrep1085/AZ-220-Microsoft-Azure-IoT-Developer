@@ -980,7 +980,7 @@ In this task, the mapped property and telemetry values identified in **Exercise 
 
 The **DTDL Editor for Visual Studio Code** extension does a good job of validating the syntax for an individual model, however it cannot validate a hierarchy of models - i.e. ensure that the **target** identified in a Relationship exists. To assist with this challenge, Microsoft has developed a command-line tool - the **DTDL Validator** that can validate a directory tree of DTDL files. This utility makes use of the **Microsoft.Azure.DigitalTwins.Parser** NuGet package to parse and validate the files.
 
-1. To install the **DTDL Validator**, open a browser and navigate to the [DTDL Validator](https://docs.microsoft.com/samples/azure-samples/dtdl-validator/dtdl-validator/) page.
+1. To install the **DTDL Validator**, open a browser and navigate to the [DTDL Validator](https://github.com/Azure-Samples/DTDL-Validator/releases) page.
 
 1. To download the source zip, click **Download ZIP**.
 
